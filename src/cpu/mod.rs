@@ -14,7 +14,7 @@ mod test {
     #[test]
     fn lda() {
         assert!(matches!(
-            Instruction::get_instruction(&[0xa9, 0xc0, 0x00], &0).unwrap(),
+            Instruction::get_instruction(&[LDA_IMMEDIATE, 0xc0, 0x00], &0).unwrap(),
             (
                 Instruction::Ld {
                     destination: _,
@@ -24,13 +24,37 @@ mod test {
             )
         ));
 
-        let cpu = run_on_cpu(vec![0xa9, 0xf0, 0x00]).unwrap();
+        let cpu = run_on_cpu(vec![LDA_IMMEDIATE, 0xf0, 0x00]).unwrap();
         assert_eq!(cpu.register_a, 0xf0);
         assert!(cpu.status.get(Flags::Negative));
         assert!(!cpu.status.get(Flags::Zero));
 
-        let cpu = run_on_cpu(vec![0xa9, 0x00, 0x00]).unwrap();
+        let cpu = run_on_cpu(vec![LDA_IMMEDIATE, 0x00, 0x00]).unwrap();
         assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn ldx() {
+        assert!(matches!(
+            Instruction::get_instruction(&[LDX_IMMEDIATE, 0xc0, 0x00], &0).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: _,
+                    ld_type: LdType::Immediate { immediate: 0xc0 }
+                },
+                2
+            )
+        ));
+
+        let cpu = run_on_cpu(vec![LDX_IMMEDIATE, 0xf0, 0x00]).unwrap();
+        assert_eq!(cpu.register_x, 0xf0);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let cpu = run_on_cpu(vec![LDX_IMMEDIATE, 0x00, 0x00]).unwrap();
+        assert_eq!(cpu.register_x, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
         assert!(cpu.status.get(Flags::Zero));
     }
@@ -38,7 +62,7 @@ mod test {
     #[test]
     fn tax() {
         assert!(matches!(
-            Instruction::get_instruction(&[0xaa, 0x00], &0).unwrap(),
+            Instruction::get_instruction(&[TAX, 0x00], &0).unwrap(),
             (
                 Instruction::Trr {
                     origin: _,
@@ -48,12 +72,30 @@ mod test {
             )
         ));
 
-        let cpu = run_on_cpu(vec![0xa9, 0xf0, 0xaa, 0x00]).unwrap();
+        let cpu = run_on_cpu(vec![LDA_IMMEDIATE, 0xf0, TAX, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0xf0);
         assert!(cpu.status.get(Flags::Negative));
         assert!(!cpu.status.get(Flags::Zero));
 
-        let cpu = run_on_cpu(vec![0xaa, 0x00]).unwrap();
+        let cpu = run_on_cpu(vec![TAX, 0x00]).unwrap();
+        assert_eq!(cpu.register_x, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn inx() {
+        assert!(matches!(
+            Instruction::get_instruction(&[INX, 0x00], &0).unwrap(),
+            (Instruction::In { destination: _ }, 1)
+        ));
+
+        let cpu = run_on_cpu(vec![LDX_IMMEDIATE, 0xf0, INX, 0x00]).unwrap();
+        assert_eq!(cpu.register_x, 0xf1);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let cpu = run_on_cpu(vec![LDX_IMMEDIATE, 0xff, INX, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
         assert!(cpu.status.get(Flags::Zero));
@@ -143,6 +185,12 @@ impl Cpu {
                     *destination(self) = origin(self);
                     let register_value = *destination(self);
                     self.set_zero_and_negative(register_value)
+                }
+                In { destination } => {
+                    let (result, _overflow) = u8::overflowing_add(*destination(self), 1);
+                    *destination(self) = result;
+                    let register_value: u8 = *destination(self);
+                    self.set_zero_and_negative(register_value);
                 }
             }
         }

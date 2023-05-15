@@ -1,5 +1,10 @@
 use super::{Cpu, RegisterImmutable, RegisterMutable};
 
+pub const LDA_IMMEDIATE: u8 = 0xa9;
+pub const LDX_IMMEDIATE: u8 = 0xa2;
+pub const TAX: u8 = 0xaa;
+pub const INX: u8 = 0xe8;
+
 #[derive(Debug)]
 pub enum LdType {
     Immediate { immediate: u8 },
@@ -13,6 +18,9 @@ pub enum Instruction {
     },
     Trr {
         origin: RegisterImmutable,
+        destination: RegisterMutable,
+    },
+    In {
         destination: RegisterMutable,
     },
 }
@@ -29,8 +37,18 @@ impl Instruction {
         let mut instructions = instructions.iter().skip(*offset as usize).enumerate();
         let (offset, instruction) = match instructions.next().ok_or(null_pointer())? {
             (_, 0x00) => (0, Instruction::Break),
-            (_, 0xa9) => {
-                // LDA Immidiate
+            (_, &LDX_IMMEDIATE) => {
+                // LDX Immidiate
+                let (offset, &immediate) = instructions.next().ok_or(null_pointer())?;
+                (
+                    offset,
+                    Instruction::Ld {
+                        destination: Cpu::register_x_mut,
+                        ld_type: LdType::Immediate { immediate },
+                    },
+                )
+            }
+            (_, &LDA_IMMEDIATE) => {
                 let (offset, &immediate) = instructions.next().ok_or(null_pointer())?;
                 (
                     offset,
@@ -40,11 +58,18 @@ impl Instruction {
                     },
                 )
             }
-            (_, 0xaa) => (
+            (_, &TAX) => (
                 // TAX
                 0,
                 Instruction::Trr {
                     origin: Cpu::register_a,
+                    destination: Cpu::register_x_mut,
+                },
+            ),
+            (_, &INX) => (
+                // INX
+                0,
+                Instruction::In {
                     destination: Cpu::register_x_mut,
                 },
             ),
