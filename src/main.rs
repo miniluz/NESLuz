@@ -1,5 +1,10 @@
 mod cpu;
 
-fn main() {
-    println!("Hello, world!");
+fn main() -> color_eyre::Result<()> {
+    let mut cpu = cpu::Cpu::new();
+    let instructions = vec![0xa9, 0xc0, 0x00];
+
+    cpu.interpret(instructions)?;
+
+    Ok(())
 }

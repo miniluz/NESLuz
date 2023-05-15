@@ -1,21 +1,115 @@
 mod instruction;
+mod status;
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn run_on_cpu(instructions: Vec<u8>) -> color_eyre::Result<Cpu> {
+        let mut cpu = Cpu::new();
+        cpu.interpret(instructions)?;
+        Ok(cpu)
+    }
+
+    #[test]
+    fn lda() {
+        assert!(matches!(
+            Instruction::get_instruction(&[0xa9, 0xc0, 0x00], &0).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: _,
+                    ld_type: LdType::Immediate { immediate: 0xc0 }
+                },
+                2
+            )
+        ));
+
+        let cpu = run_on_cpu(vec![0xa9, 0xf0, 0x00]).unwrap();
+        assert_eq!(cpu.register_a, 0xf0);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let cpu = run_on_cpu(vec![0xa9, 0x00, 0x00]).unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn tax() {
+        assert!(matches!(
+            Instruction::get_instruction(&[0xaa, 0x00], &0).unwrap(),
+            (
+                Instruction::Trr {
+                    origin: _,
+                    destination: _,
+                },
+                1
+            )
+        ));
+
+        let cpu = run_on_cpu(vec![0xa9, 0xf0, 0xaa, 0x00]).unwrap();
+        assert_eq!(cpu.register_x, 0xf0);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let cpu = run_on_cpu(vec![0xaa, 0x00]).unwrap();
+        assert_eq!(cpu.register_x, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+}
 
 use instruction::*;
 
+use crate::cpu::status::Flags;
+
+use self::status::Status;
+
 #[derive(Debug)]
-pub struct CPU {
-    register_a: u8,
-    status: u8,
-    program_counter: u16,
+pub struct Cpu {
+    pub register_a: u8,
+    pub register_x: u8,
+    pub status: Status,
+    pub program_counter: u16,
 }
 
-impl CPU {
+type RegisterMutable = fn(&mut Cpu) -> &mut u8;
+type RegisterImmutable = fn(&Cpu) -> u8;
+
+impl Cpu {
+    // new, getters
+
     pub fn new() -> Self {
-        CPU {
+        Cpu {
             register_a: 0x0,
-            status: 0x0,
+            register_x: 0x0,
+            status: Status::new(),
             program_counter: 0x0,
         }
+    }
+
+    pub fn register_a_mut(&mut self) -> &mut u8 {
+        &mut self.register_a
+    }
+
+    pub fn register_a(&self) -> u8 {
+        self.register_a
+    }
+
+    pub fn register_x_mut(&mut self) -> &mut u8 {
+        &mut self.register_x
+    }
+
+    pub fn register_x(&self) -> u8 {
+        self.register_x
+    }
+}
+
+impl Cpu {
+    fn set_zero_and_negative(&mut self, register_value: u8) {
+        self.status.set(Flags::Zero, register_value == 0);
+        self.status.set(Flags::Negative, (register_value as i8) < 0);
     }
 
     pub fn interpret(&mut self, program: Vec<u8>) -> color_eyre::Result<()> {
@@ -24,16 +118,32 @@ impl CPU {
         loop {
             let (instruction, offset) =
                 Instruction::get_instruction(&program, &self.program_counter)?;
-            self.program_counter += 2;
+            self.program_counter += offset;
 
             use Instruction::*;
 
             match instruction {
-                LDA(lda) => match lda {
-                    LDAType::Immediate { immediate } => {
-                        self.register_a = immediate;
+                Break => break,
+                Ld {
+                    destination,
+                    ld_type,
+                } => {
+                    match ld_type {
+                        LdType::Immediate { immediate } => {
+                            *destination(self) = immediate;
+                        }
                     }
-                },
+                    let register_value = *destination(self);
+                    self.set_zero_and_negative(register_value);
+                }
+                Trr {
+                    origin,
+                    destination,
+                } => {
+                    *destination(self) = origin(self);
+                    let register_value = *destination(self);
+                    self.set_zero_and_negative(register_value)
+                }
             }
         }
 

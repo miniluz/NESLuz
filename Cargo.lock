@@ -3,13 +3,6 @@
 version = 3
 
 [[package]]
-name = "NESluz"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -125,6 +118,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b275950c28b37e794e8c55d88aeb5e139d0ce23fdbbeda68f8d7174abdf9e8fa"
 dependencies = [
  "adler",
+]
+
+[[package]]
+name = "nesluz"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
 ]
 
 [[package]]
