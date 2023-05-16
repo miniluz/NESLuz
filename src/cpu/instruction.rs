@@ -1,4 +1,4 @@
-use super::{Cpu, RegisterImmutable, RegisterMutable};
+use super::{memory::Memory, Cpu, RegisterImmutable, RegisterMutable};
 
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDX_IMMEDIATE: u8 = 0xa2;
@@ -31,10 +31,10 @@ fn null_pointer() -> color_eyre::Report {
 
 impl Instruction {
     pub fn get_instruction(
-        instructions: &[u8],
+        memory: &Memory,
         offset: &u16,
     ) -> color_eyre::Result<(Instruction, u16)> {
-        let mut instructions = instructions.iter().skip(*offset as usize).enumerate();
+        let mut instructions = memory.iter().skip(*offset as usize).enumerate();
         let (offset, instruction) = match instructions.next().ok_or(null_pointer())? {
             (_, 0x00) => (0, Instruction::Break),
             (_, &LDX_IMMEDIATE) => {

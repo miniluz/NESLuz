@@ -1,14 +1,21 @@
 mod instruction;
+mod memory;
 mod status;
 
 #[cfg(test)]
 mod test {
     use super::*;
 
+    fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)> {
+        let mut memory = Memory::new();
+        memory.load(0x8000, instructions);
+        Instruction::get_instruction(&memory, &0x8000)
+    }
+
     #[test]
     fn lda() {
         assert!(matches!(
-            Instruction::get_instruction(&[LDA_IMMEDIATE, 0xc0, 0x00], &0).unwrap(),
+            get_instruction(&[LDA_IMMEDIATE, 0xc0]).unwrap(),
             (
                 Instruction::Ld {
                     destination: _,
@@ -19,13 +26,13 @@ mod test {
         ));
 
         let mut cpu = Cpu::new();
-        cpu.interpret(vec![LDA_IMMEDIATE, 0xf0, 0x00]).unwrap();
+        cpu.load_and_run(vec![LDA_IMMEDIATE, 0xf0, 0x00]).unwrap();
         assert_eq!(cpu.register_a, 0xf0);
         assert!(cpu.status.get(Flags::Negative));
         assert!(!cpu.status.get(Flags::Zero));
 
         let mut cpu = Cpu::new();
-        cpu.interpret(vec![LDA_IMMEDIATE, 0x00, 0x00]).unwrap();
+        cpu.load_and_run(vec![LDA_IMMEDIATE, 0x00, 0x00]).unwrap();
         assert_eq!(cpu.register_a, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
         assert!(cpu.status.get(Flags::Zero));
@@ -34,7 +41,7 @@ mod test {
     #[test]
     fn ldx() {
         assert!(matches!(
-            Instruction::get_instruction(&[LDX_IMMEDIATE, 0xc0, 0x00], &0).unwrap(),
+            get_instruction(&[LDX_IMMEDIATE, 0xc0]).unwrap(),
             (
                 Instruction::Ld {
                     destination: _,
@@ -45,13 +52,13 @@ mod test {
         ));
 
         let mut cpu = Cpu::new();
-        cpu.interpret(vec![LDX_IMMEDIATE, 0xf0, 0x00]).unwrap();
+        cpu.load_and_run(vec![LDX_IMMEDIATE, 0xf0, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0xf0);
         assert!(cpu.status.get(Flags::Negative));
         assert!(!cpu.status.get(Flags::Zero));
 
         let mut cpu = Cpu::new();
-        cpu.interpret(vec![LDX_IMMEDIATE, 0x00, 0x00]).unwrap();
+        cpu.load_and_run(vec![LDX_IMMEDIATE, 0x00, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
         assert!(cpu.status.get(Flags::Zero));
@@ -60,7 +67,7 @@ mod test {
     #[test]
     fn tax() {
         assert!(matches!(
-            Instruction::get_instruction(&[TAX, 0x00], &0).unwrap(),
+            get_instruction(&[TAX, 0x00]).unwrap(),
             (
                 Instruction::Trr {
                     origin: _,
@@ -72,14 +79,14 @@ mod test {
 
         let mut cpu = Cpu::new();
         cpu.register_a = 0xf0;
-        cpu.interpret(vec![TAX, 0x00]).unwrap();
+        cpu.load_and_run(vec![TAX, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0xf0);
         assert!(cpu.status.get(Flags::Negative));
         assert!(!cpu.status.get(Flags::Zero));
 
         let mut cpu = Cpu::new();
         cpu.register_x = 0x50;
-        cpu.interpret(vec![TAX, 0x00]).unwrap();
+        cpu.load_and_run(vec![TAX, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
         assert!(cpu.status.get(Flags::Zero));
@@ -88,32 +95,31 @@ mod test {
     #[test]
     fn inx() {
         assert!(matches!(
-            Instruction::get_instruction(&[INX, 0x00], &0).unwrap(),
+            get_instruction(&[INX, 0x00]).unwrap(),
             (Instruction::In { destination: _ }, 1)
         ));
 
         let mut cpu = Cpu::new();
         cpu.register_x = 0xf0;
-        cpu.interpret(vec![INX, 0x00]).unwrap();
+        cpu.load_and_run(vec![INX, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0xf1);
         assert!(cpu.status.get(Flags::Negative));
         assert!(!cpu.status.get(Flags::Zero));
 
         let mut cpu = Cpu::new();
         cpu.register_x = 0xff;
-        cpu.interpret(vec![INX, 0x00]).unwrap();
+        cpu.load_and_run(vec![INX, 0x00]).unwrap();
         assert_eq!(cpu.register_x, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
         assert!(cpu.status.get(Flags::Zero));
     }
-
 }
 
 use instruction::*;
 
 use crate::cpu::status::Flags;
 
-use self::status::Status;
+use self::{memory::Memory, status::Status};
 
 #[derive(Debug)]
 pub struct Cpu {
@@ -121,6 +127,7 @@ pub struct Cpu {
     pub register_x: u8,
     pub status: Status,
     pub program_counter: u16,
+    memory: Memory,
 }
 
 type RegisterMutable = fn(&mut Cpu) -> &mut u8;
@@ -135,6 +142,7 @@ impl Cpu {
             register_x: 0x0,
             status: Status::new(),
             program_counter: 0x0,
+            memory: Memory::new(),
         }
     }
 
@@ -161,12 +169,22 @@ impl Cpu {
         self.status.set(Flags::Negative, (register_value as i8) < 0);
     }
 
-    pub fn interpret(&mut self, program: Vec<u8>) -> color_eyre::Result<()> {
-        self.program_counter = 0;
+    pub fn load_and_run(&mut self, program: Vec<u8>) -> color_eyre::Result<()> {
+        self.load(program);
+        self.run()?;
 
+        Ok(())
+    }
+
+    pub fn load(&mut self, program: Vec<u8>) {
+        self.memory.load(0x8000, &program);
+        self.program_counter = 0x8000;
+    }
+
+    pub fn run(&mut self) -> color_eyre::Result<()> {
         loop {
             let (instruction, offset) =
-                Instruction::get_instruction(&program, &self.program_counter)?;
+                Instruction::get_instruction(&self.memory, &self.program_counter)?;
             self.program_counter += offset;
 
             use Instruction::*;
