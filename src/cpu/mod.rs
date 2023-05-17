@@ -19,7 +19,7 @@ mod test {
             (
                 Instruction::Ld {
                     destination: Register::A,
-                    ld_type: LdType::Immediate { immediate: 0xc0 }
+                    addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
                 },
                 0x8002,
             )
@@ -47,7 +47,7 @@ mod test {
             (
                 Instruction::Ld {
                     destination: Register::X,
-                    ld_type: LdType::Immediate { immediate: 0xc0 }
+                    addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
                 },
                 0x8002
             )
@@ -75,7 +75,7 @@ mod test {
             (
                 Instruction::Ld {
                     destination: Register::A,
-                    ld_type: LdType::ZeroPage { address: 0xc0 }
+                    addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
                 },
                 0x8002,
             )
@@ -106,7 +106,7 @@ mod test {
             (
                 Instruction::Ld {
                     destination: Register::A,
-                    ld_type: LdType::ZeroPageX { address: 0xc0 }
+                    addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
                 },
                 0x8002,
             )
@@ -125,6 +125,167 @@ mod test {
 
         let mut cpu = Cpu::new();
         cpu.load_and_run_test(vec![LDA_ZERO_PAGE_X, 0x02, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn lda_absolute() {
+        assert!(matches!(
+            get_instruction(&[LDA_ABSOLUTE, 0xab, 0xcd]).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                },
+                0x8003,
+            )
+        ));
+
+        let mut cpu = Cpu::new();
+        cpu.load(vec![LDA_ABSOLUTE, 0x02, 0x01, 0x00]).unwrap();
+        cpu.reset().unwrap();
+        cpu.program_counter = 0x8000;
+        cpu.memory.load(0x0100, &[0x01, 0x02, 0xf3, 0x04]).unwrap();
+        cpu.run().unwrap();
+        assert_eq!(cpu.register_a, 0xf3);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_ABSOLUTE, 0x00, 0x02, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn lda_absolute_x() {
+        assert!(matches!(
+            get_instruction(&[LDA_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+                },
+                0x8003,
+            )
+        ));
+
+        let mut cpu = Cpu::new();
+        cpu.load(vec![LDA_ABSOLUTE_X, 0x02, 0x01, 0x00]).unwrap();
+        cpu.reset().unwrap();
+        cpu.program_counter = 0x8000;
+        cpu.register_x = 0x01;
+        cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf4]).unwrap();
+        cpu.run().unwrap();
+        assert_eq!(cpu.register_a, 0xf4);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_ABSOLUTE_X, 0x00, 0x02, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn lda_absolute_y() {
+        assert!(matches!(
+            get_instruction(&[LDA_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+                },
+                0x8003,
+            )
+        ));
+
+        let mut cpu = Cpu::new();
+        cpu.load(vec![LDA_ABSOLUTE_Y, 0x02, 0x01, 0x00]).unwrap();
+        cpu.reset().unwrap();
+        cpu.program_counter = 0x8000;
+        cpu.register_y = 0x01;
+        cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf4]).unwrap();
+        cpu.run().unwrap();
+        assert_eq!(cpu.register_a, 0xf4);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_ABSOLUTE_X, 0x00, 0x02, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn lda_indirect_x() {
+        assert!(matches!(
+            get_instruction(&[LDA_INDIRECT_X, 0xab]).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::IndirectX { address: 0xab }
+                },
+                0x8002,
+            )
+        ));
+
+        let mut cpu = Cpu::new();
+        cpu.load(vec![LDA_INDIRECT_X, 0x01, 0x00]).unwrap();
+        cpu.reset().unwrap();
+        cpu.program_counter = 0x8000;
+        cpu.register_x = 0x01;
+        cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+        cpu.memory.load(0x0403, &[0xff]).unwrap();
+        cpu.run().unwrap();
+        assert_eq!(cpu.register_a, 0xff);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_INDIRECT_X, 0x02, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+    }
+
+    #[test]
+    fn lda_indirect_y() {
+        assert!(matches!(
+            get_instruction(&[LDA_INDIRECT_Y, 0xab]).unwrap(),
+            (
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::IndirectY { address: 0xab }
+                },
+                0x8002,
+            )
+        ));
+
+        let mut cpu = Cpu::new();
+        cpu.load(vec![LDA_INDIRECT_Y, 0x01, 0x00]).unwrap();
+        cpu.reset().unwrap();
+        cpu.program_counter = 0x8000;
+        cpu.register_y = 0x01;
+        cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+        cpu.memory.load(0x0303, &[0xff]).unwrap();
+        cpu.run().unwrap();
+        assert_eq!(cpu.register_a, 0xff);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_INDIRECT_Y, 0x02, 0x00])
             .unwrap();
         assert_eq!(cpu.register_a, 0x00);
         assert!(!cpu.status.get(Flags::Negative));
@@ -295,15 +456,39 @@ impl Cpu {
                 Break => break,
                 Ld {
                     destination,
-                    ld_type,
+                    addressing_mode,
                 } => {
-                    let value: u8 = match ld_type {
-                        LdType::Immediate { immediate } => immediate,
-                        LdType::ZeroPage { address } => self.memory.read(address as u16)?,
-                        LdType::ZeroPageX { address } => {
-                            self.memory.read((address + self.register_x) as u16)?
+                    use AddressingMode::*;
+                    let value: u8 = match addressing_mode {
+                        Immediate { immediate } => immediate,
+                        ZeroPage { address } => self.memory.read(address as u16)?,
+                        ZeroPageX { address } => {
+                            let address = address.wrapping_add(self.register_x);
+                            self.memory.read(address as u16)?
                         }
-                        LdType::Absolute { address } => self.memory.read(address)?,
+                        Absolute { address } => self.memory.read(address)?,
+                        AbsoluteX { address } => {
+                            let address = address.wrapping_add(self.register_x as u16);
+                            self.memory.read(address)?
+                        }
+                        AbsoluteY { address } => {
+                            let address = address.wrapping_add(self.register_y as u16);
+                            self.memory.read(address)?
+                        }
+                        IndirectX { address } => {
+                            let base = address.wrapping_add(self.register_x);
+                            let lo = self.memory.read(base as u16)?;
+                            let hi = self.memory.read(base.wrapping_add(1) as u16)?;
+                            let address = (hi as u16) << 8 | lo as u16;
+                            self.memory.read(address)?
+                        }
+                        IndirectY { address } => {
+                            let lo = self.memory.read(address as u16)?;
+                            let hi = self.memory.read(address.wrapping_add(1) as u16)?;
+                            let address = (hi as u16) << 8 | lo as u16;
+                            let address = address.wrapping_add(self.register_y as u16);
+                            self.memory.read(address)?
+                        }
                     };
                     self.set_register(&destination, value);
                     self.set_zero_and_negative(value);

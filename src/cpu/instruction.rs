@@ -4,17 +4,26 @@ pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
 pub const LDA_ZERO_PAGE_X: u8 = 0xb5;
 pub const LDA_ABSOLUTE: u8 = 0xad;
+pub const LDA_ABSOLUTE_X: u8 = 0xbd;
+pub const LDA_ABSOLUTE_Y: u8 = 0xb9;
+pub const LDA_INDIRECT_X: u8 = 0xa1;
+pub const LDA_INDIRECT_Y: u8 = 0xb1;
+
 pub const LDX_IMMEDIATE: u8 = 0xa2;
 pub const LDX_ZERO_PAGE: u8 = 0xa6;
 pub const TAX: u8 = 0xaa;
 pub const INX: u8 = 0xe8;
 
 #[derive(Debug)]
-pub enum LdType {
+pub enum AddressingMode {
     Immediate { immediate: u8 },
     ZeroPage { address: u8 },
     ZeroPageX { address: u8 },
     Absolute { address: u16 },
+    AbsoluteX { address: u16 },
+    AbsoluteY { address: u16 },
+    IndirectX { address: u8 },
+    IndirectY { address: u8 },
 }
 
 #[derive(Debug)]
@@ -22,7 +31,7 @@ pub enum Instruction {
     Break,
     Ld {
         destination: Register,
-        ld_type: LdType,
+        addressing_mode: AddressingMode,
     },
     Trr {
         origin: Register,
@@ -31,10 +40,6 @@ pub enum Instruction {
     In {
         destination: Register,
     },
-}
-
-fn null_pointer() -> color_eyre::Report {
-    color_eyre::eyre::eyre!("Should have instruction at pointer.")
 }
 
 impl Instruction {
@@ -57,7 +62,7 @@ impl Instruction {
                 };
                 Instruction::Ld {
                     destination,
-                    ld_type: LdType::Immediate { immediate },
+                    addressing_mode: AddressingMode::Immediate { immediate },
                 }
             }
             LDA_ZERO_PAGE | LDX_ZERO_PAGE => {
@@ -70,7 +75,7 @@ impl Instruction {
                 };
                 Instruction::Ld {
                     destination,
-                    ld_type: LdType::ZeroPage { address },
+                    addressing_mode: AddressingMode::ZeroPage { address },
                 }
             }
             LDA_ZERO_PAGE_X => {
@@ -78,7 +83,7 @@ impl Instruction {
                 program_counter += 1;
                 Instruction::Ld {
                     destination: Register::A,
-                    ld_type: LdType::ZeroPageX { address },
+                    addressing_mode: AddressingMode::ZeroPageX { address },
                 }
             }
             LDA_ABSOLUTE => {
@@ -86,7 +91,39 @@ impl Instruction {
                 program_counter += 2;
                 Instruction::Ld {
                     destination: Register::A,
-                    ld_type: LdType::Absolute { address },
+                    addressing_mode: AddressingMode::Absolute { address },
+                }
+            }
+            LDA_ABSOLUTE_X => {
+                let address = memory.read_u16(program_counter)?;
+                program_counter += 2;
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::AbsoluteX { address },
+                }
+            }
+            LDA_ABSOLUTE_Y => {
+                let address = memory.read_u16(program_counter)?;
+                program_counter += 2;
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::AbsoluteY { address },
+                }
+            }
+            LDA_INDIRECT_X => {
+                let address = memory.read(program_counter)?;
+                program_counter += 1;
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::IndirectX { address },
+                }
+            }
+            LDA_INDIRECT_Y => {
+                let address: u8 = memory.read(program_counter)?;
+                program_counter += 1;
+                Instruction::Ld {
+                    destination: Register::A,
+                    addressing_mode: AddressingMode::IndirectY { address },
                 }
             }
             TAX => Instruction::Trr {
