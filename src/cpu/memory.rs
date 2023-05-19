@@ -55,6 +55,7 @@ impl Memory {
     }
 }
 
+#[inline]
 fn out_of_bounds() -> color_eyre::eyre::Report {
     color_eyre::eyre::eyre!("Index out of bounds.")
 }
