@@ -444,6 +444,41 @@ impl Cpu {
 }
 
 impl Cpu {
+    pub fn read_address(&mut self, addressing_mode: AddressingMode) -> color_eyre::Result<u8> {
+        use AddressingMode::*;
+        match addressing_mode {
+            Immediate { immediate } => Ok(immediate),
+            ZeroPage { address } => self.memory.read(address as u16),
+            ZeroPageX { address } => {
+                let address = address.wrapping_add(self.register_x);
+                self.memory.read(address as u16)
+            }
+            Absolute { address } => self.memory.read(address),
+            AbsoluteX { address } => {
+                let address = address.wrapping_add(self.register_x as u16);
+                self.memory.read(address)
+            }
+            AbsoluteY { address } => {
+                let address = address.wrapping_add(self.register_y as u16);
+                self.memory.read(address)
+            }
+            IndirectX { address } => {
+                let base = address.wrapping_add(self.register_x);
+                let lo = self.memory.read(base as u16)?;
+                let hi = self.memory.read(base.wrapping_add(1) as u16)?;
+                let address = (hi as u16) << 8 | lo as u16;
+                self.memory.read(address)
+            }
+            IndirectY { address } => {
+                let lo = self.memory.read(address as u16)?;
+                let hi = self.memory.read(address.wrapping_add(1) as u16)?;
+                let address = (hi as u16) << 8 | lo as u16;
+                let address = address.wrapping_add(self.register_y as u16);
+                self.memory.read(address)
+            }
+        }
+    }
+
     pub fn run(&mut self) -> color_eyre::Result<()> {
         loop {
             let (instruction, program_counter) =
@@ -454,42 +489,21 @@ impl Cpu {
 
             match instruction {
                 Break => break,
+                Adc { addressing_mode } => {
+                    let value = self.read_address(addressing_mode)?;
+                    let carry = self.status.get(Flags::Carry) as i8;
+                    let (value, overflow) = (self.register_a as i8).overflowing_add(value as i8);
+                    let (value, carry_overflow) = value.overflowing_add(carry);
+                    let value = value as u8;
+                    self.register_a = value;
+                    self.status.set(Flags::Overflow, overflow || carry_overflow);
+                    self.set_zero_and_negative(value)
+                }
                 Ld {
                     destination,
                     addressing_mode,
                 } => {
-                    use AddressingMode::*;
-                    let value: u8 = match addressing_mode {
-                        Immediate { immediate } => immediate,
-                        ZeroPage { address } => self.memory.read(address as u16)?,
-                        ZeroPageX { address } => {
-                            let address = address.wrapping_add(self.register_x);
-                            self.memory.read(address as u16)?
-                        }
-                        Absolute { address } => self.memory.read(address)?,
-                        AbsoluteX { address } => {
-                            let address = address.wrapping_add(self.register_x as u16);
-                            self.memory.read(address)?
-                        }
-                        AbsoluteY { address } => {
-                            let address = address.wrapping_add(self.register_y as u16);
-                            self.memory.read(address)?
-                        }
-                        IndirectX { address } => {
-                            let base = address.wrapping_add(self.register_x);
-                            let lo = self.memory.read(base as u16)?;
-                            let hi = self.memory.read(base.wrapping_add(1) as u16)?;
-                            let address = (hi as u16) << 8 | lo as u16;
-                            self.memory.read(address)?
-                        }
-                        IndirectY { address } => {
-                            let lo = self.memory.read(address as u16)?;
-                            let hi = self.memory.read(address.wrapping_add(1) as u16)?;
-                            let address = (hi as u16) << 8 | lo as u16;
-                            let address = address.wrapping_add(self.register_y as u16);
-                            self.memory.read(address)?
-                        }
-                    };
+                    let value = self.read_address(addressing_mode)?;
                     self.set_register(&destination, value);
                     self.set_zero_and_negative(value);
                 }

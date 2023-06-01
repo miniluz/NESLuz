@@ -1,5 +1,14 @@
 use super::{memory::Memory, Register};
 
+pub const ADC_IMMEDIATE: u8 = 0x69;
+pub const ADC_ZERO_PAGE: u8 = 0x65;
+pub const ADC_ZERO_PAGE_X: u8 = 0x75;
+pub const ADC_ABSOLUTE: u8 = 0x6d;
+pub const ADC_ABSOLUTE_X: u8 = 0x7d;
+pub const ADC_ABSOLUTE_Y: u8 = 0x79;
+pub const ADC_INDIRECT_X: u8 = 0x61;
+pub const ADC_INDIRECT_Y: u8 = 0x71;
+
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
 pub const LDA_ZERO_PAGE_X: u8 = 0xb5;
@@ -11,6 +20,7 @@ pub const LDA_INDIRECT_Y: u8 = 0xb1;
 
 pub const LDX_IMMEDIATE: u8 = 0xa2;
 pub const LDX_ZERO_PAGE: u8 = 0xa6;
+
 pub const TAX: u8 = 0xaa;
 pub const INX: u8 = 0xe8;
 
@@ -29,6 +39,9 @@ pub enum AddressingMode {
 #[derive(Debug)]
 pub enum Instruction {
     Break,
+    Adc {
+        addressing_mode: AddressingMode,
+    },
     Ld {
         destination: Register,
         addressing_mode: AddressingMode,
@@ -126,11 +139,17 @@ impl Instruction {
                     addressing_mode: AddressingMode::IndirectY { address },
                 }
             }
+            ADC_IMMEDIATE => {
+                let immediate = memory.read(program_counter)?;
+                program_counter += 1;
+                Instruction::Adc {
+                    addressing_mode: AddressingMode::Immediate { immediate },
+                }
+            }
             TAX => Instruction::Trr {
                 origin: Register::A,
                 destination: Register::X,
             },
-
             INX => Instruction::In {
                 destination: Register::X,
             },
