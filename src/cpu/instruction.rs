@@ -36,6 +36,80 @@ pub enum AddressingMode {
     IndirectY { address: u8 },
 }
 
+impl AddressingMode {
+    pub fn immediate(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let immediate = memory.read(*program_counter)?;
+        *program_counter += 1;
+        Ok(AddressingMode::Immediate { immediate })
+    }
+
+    pub fn zero_page(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address = memory.read(*program_counter)?;
+        *program_counter += 1;
+        Ok(AddressingMode::ZeroPage { address })
+    }
+
+    pub fn zero_page_x(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address: u8 = memory.read(*program_counter)?;
+        *program_counter += 1;
+        Ok(AddressingMode::ZeroPageX { address })
+    }
+
+    pub fn absolute(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address = memory.read_u16(*program_counter)?;
+        *program_counter += 2;
+        Ok(AddressingMode::Absolute { address })
+    }
+
+    pub fn absolute_x(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address = memory.read_u16(*program_counter)?;
+        *program_counter += 2;
+        Ok(AddressingMode::AbsoluteX { address })
+    }
+
+    pub fn absolute_y(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address = memory.read_u16(*program_counter)?;
+        *program_counter += 2;
+        Ok(AddressingMode::AbsoluteY { address })
+    }
+
+    pub fn indirect_x(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address = memory.read(*program_counter)?;
+        *program_counter += 1;
+        Ok(AddressingMode::IndirectX { address })
+    }
+
+    pub fn indirect_y(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address = memory.read(*program_counter)?;
+        *program_counter += 1;
+        Ok(AddressingMode::IndirectY { address })
+    }
+}
+
 #[derive(Debug)]
 pub enum Instruction {
     Break,
@@ -65,9 +139,12 @@ impl Instruction {
         program_counter += 1;
         let instruction = match instruction {
             0x00 => Instruction::Break,
+            ADC_IMMEDIATE => {
+                let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;
+                Instruction::Adc { addressing_mode }
+            }
             LDA_IMMEDIATE | LDX_IMMEDIATE => {
-                let immediate = memory.read(program_counter)?;
-                program_counter += 1;
+                let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;
                 let destination = match instruction {
                     LDA_IMMEDIATE => Register::A,
                     LDX_IMMEDIATE => Register::X,
@@ -75,12 +152,15 @@ impl Instruction {
                 };
                 Instruction::Ld {
                     destination,
-                    addressing_mode: AddressingMode::Immediate { immediate },
+                    addressing_mode,
                 }
             }
+            ADC_ZERO_PAGE => {
+                let addressing_mode = AddressingMode::zero_page(memory, &mut program_counter)?;
+                Instruction::Adc { addressing_mode }
+            }
             LDA_ZERO_PAGE | LDX_ZERO_PAGE => {
-                let address = memory.read(program_counter)?;
-                program_counter += 1;
+                let addressing_mode = AddressingMode::zero_page(memory, &mut program_counter)?;
                 let destination = match instruction {
                     LDA_ZERO_PAGE => Register::A,
                     LDX_ZERO_PAGE => Register::X,
@@ -88,62 +168,61 @@ impl Instruction {
                 };
                 Instruction::Ld {
                     destination,
-                    addressing_mode: AddressingMode::ZeroPage { address },
+                    addressing_mode,
                 }
+            }
+            ADC_ZERO_PAGE_X => {
+                let addressing_mode = AddressingMode::zero_page_x(memory, &mut program_counter)?;
+                Instruction::Adc { addressing_mode }
             }
             LDA_ZERO_PAGE_X => {
-                let address = memory.read(program_counter)?;
-                program_counter += 1;
+                let addressing_mode = AddressingMode::zero_page_x(memory, &mut program_counter)?;
                 Instruction::Ld {
                     destination: Register::A,
-                    addressing_mode: AddressingMode::ZeroPageX { address },
+                    addressing_mode,
                 }
+            }
+            ADC_ABSOLUTE => {
+                let addressing_mode = AddressingMode::absolute(memory, &mut program_counter)?;
+                Instruction::Adc { addressing_mode }
             }
             LDA_ABSOLUTE => {
-                let address = memory.read_u16(program_counter)?;
-                program_counter += 2;
+                let addressing_mode = AddressingMode::absolute(memory, &mut program_counter)?;
                 Instruction::Ld {
                     destination: Register::A,
-                    addressing_mode: AddressingMode::Absolute { address },
+                    addressing_mode,
                 }
             }
+            ADC_ABSOLUTE_X => {
+                let addressing_mode = AddressingMode::absolute_x(memory, &mut program_counter)?;
+                Instruction::Adc { addressing_mode }
+            }
             LDA_ABSOLUTE_X => {
-                let address = memory.read_u16(program_counter)?;
-                program_counter += 2;
+                let addressing_mode = AddressingMode::absolute_x(memory, &mut program_counter)?;
                 Instruction::Ld {
                     destination: Register::A,
-                    addressing_mode: AddressingMode::AbsoluteX { address },
+                    addressing_mode,
                 }
             }
             LDA_ABSOLUTE_Y => {
-                let address = memory.read_u16(program_counter)?;
-                program_counter += 2;
+                let addressing_mode = AddressingMode::absolute_y(memory, &mut program_counter)?;
                 Instruction::Ld {
                     destination: Register::A,
-                    addressing_mode: AddressingMode::AbsoluteY { address },
+                    addressing_mode,
                 }
             }
             LDA_INDIRECT_X => {
-                let address = memory.read(program_counter)?;
-                program_counter += 1;
+                let addressing_mode = AddressingMode::indirect_x(memory, &mut program_counter)?;
                 Instruction::Ld {
                     destination: Register::A,
-                    addressing_mode: AddressingMode::IndirectX { address },
+                    addressing_mode,
                 }
             }
             LDA_INDIRECT_Y => {
-                let address: u8 = memory.read(program_counter)?;
-                program_counter += 1;
+                let addressing_mode = AddressingMode::indirect_y(memory, &mut program_counter)?;
                 Instruction::Ld {
                     destination: Register::A,
-                    addressing_mode: AddressingMode::IndirectY { address },
-                }
-            }
-            ADC_IMMEDIATE => {
-                let immediate = memory.read(program_counter)?;
-                program_counter += 1;
-                Instruction::Adc {
-                    addressing_mode: AddressingMode::Immediate { immediate },
+                    addressing_mode,
                 }
             }
             TAX => Instruction::Trr {
