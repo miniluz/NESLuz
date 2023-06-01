@@ -13,6 +13,11 @@ mod test {
     }
 
     #[test]
+    fn adc() {
+        todo!()
+    }
+
+    #[test]
     fn lda_immediate() {
         assert!(matches!(
             get_instruction(&[LDA_IMMEDIATE, 0xc0]).unwrap(),
