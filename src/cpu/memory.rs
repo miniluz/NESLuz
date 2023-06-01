@@ -55,9 +55,10 @@ impl Memory {
     }
 }
 
-#[inline]
-fn out_of_bounds() -> color_eyre::eyre::Report {
-    color_eyre::eyre::eyre!("Index out of bounds.")
+macro_rules! out_of_bounds {
+    () => {
+        color_eyre::eyre::eyre!("Index out of bounds.")
+    };
 }
 
 impl Memory {
@@ -65,7 +66,7 @@ impl Memory {
         self.memory
             .get(address as usize)
             .map(u8::clone)
-            .ok_or(out_of_bounds())
+            .ok_or(out_of_bounds!())
     }
 
     pub fn read_u16(&self, address: u16) -> color_eyre::eyre::Result<u16> {
@@ -78,7 +79,7 @@ impl Memory {
         *self
             .memory
             .get_mut(address as usize)
-            .ok_or(out_of_bounds())? = data;
+            .ok_or(out_of_bounds!())? = data;
         Ok(())
     }
 
@@ -94,7 +95,7 @@ impl Memory {
         let address = address as usize;
         self.memory
             .get_mut(address..(address + data.len()))
-            .ok_or(out_of_bounds())?
+            .ok_or(out_of_bounds!())?
             .copy_from_slice(data);
         Ok(())
     }
