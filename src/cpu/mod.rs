@@ -13,8 +13,43 @@ mod test {
     }
 
     #[test]
-    fn adc() {
-        todo!()
+    fn adc_immediate() {
+        assert!(matches!(
+            get_instruction(&[ADC_IMMEDIATE, 0xc0]).unwrap(),
+            (
+                Instruction::Adc {
+                    addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+                },
+                0x8002
+            )
+        ));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![ADC_IMMEDIATE, 0xf0, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0xf0);
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+        assert!(!cpu.status.get(Flags::Overflow));
+        assert!(!cpu.status.get(Flags::Carry));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_IMMEDIATE, 0x71, ADC_IMMEDIATE, 0x72, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+        assert!(cpu.status.get(Flags::Negative));
+        assert!(!cpu.status.get(Flags::Zero));
+        assert!(cpu.status.get(Flags::Overflow));
+        assert!(!cpu.status.get(Flags::Carry));
+
+        let mut cpu = Cpu::new();
+        cpu.load_and_run_test(vec![LDA_IMMEDIATE, 0x80, ADC_IMMEDIATE, 0x80, 0x00])
+            .unwrap();
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(!cpu.status.get(Flags::Negative));
+        assert!(cpu.status.get(Flags::Zero));
+        assert!(cpu.status.get(Flags::Overflow));
+        assert!(cpu.status.get(Flags::Carry));
     }
 
     #[test]
@@ -496,12 +531,25 @@ impl Cpu {
                 Break => break,
                 Adc { addressing_mode } => {
                     let value = self.read_address(addressing_mode)?;
-                    let carry = self.status.get(Flags::Carry) as i8;
-                    let (value, overflow) = (self.register_a as i8).overflowing_add(value as i8);
-                    let (value, carry_overflow) = value.overflowing_add(carry);
-                    let value = value as u8;
+                    let carry = self.status.get(Flags::Carry) as u8;
+
+                    let carry_flag = {
+                        let (value, first_carry) = self.register_a.overflowing_add(value);
+                        let (_, second_carry) = value.overflowing_add(carry);
+                        first_carry || second_carry
+                    };
+
+                    let (value, overflow_flag) = {
+                        let (value, first_overflow) =
+                            (self.register_a as i8).overflowing_add(value as i8);
+                        let (value, second_overflow) = value.overflowing_add(carry as i8);
+                        (value as u8, first_overflow || second_overflow)
+                    };
+
                     self.register_a = value;
-                    self.status.set(Flags::Overflow, overflow || carry_overflow);
+
+                    self.status.set(Flags::Overflow, overflow_flag);
+                    self.status.set(Flags::Carry, carry_flag);
                     self.set_zero_and_negative(value)
                 }
                 Ld {
