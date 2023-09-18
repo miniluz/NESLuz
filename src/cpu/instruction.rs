@@ -20,6 +20,7 @@ pub const LDA_INDIRECT_Y: u8 = 0xb1;
 
 pub const LDX_IMMEDIATE: u8 = 0xa2;
 pub const LDX_ZERO_PAGE: u8 = 0xa6;
+pub const LDX_ZERO_PAGE_Y: u8 = 0xb6;
 
 pub const TAX: u8 = 0xaa;
 pub const INX: u8 = 0xe8;
@@ -29,6 +30,7 @@ pub enum AddressingMode {
     Immediate { immediate: u8 },
     ZeroPage { address: u8 },
     ZeroPageX { address: u8 },
+    ZeroPageY { address: u8 },
     Absolute { address: u16 },
     AbsoluteX { address: u16 },
     AbsoluteY { address: u16 },
@@ -62,6 +64,15 @@ impl AddressingMode {
         let address: u8 = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::ZeroPageX { address })
+    }
+
+    pub fn zero_page_y(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> color_eyre::Result<AddressingMode> {
+        let address: u8 = memory.read(*program_counter)?;
+        *program_counter += 1;
+        Ok(AddressingMode::ZeroPageY { address })
     }
 
     pub fn absolute(
@@ -241,6 +252,14 @@ impl Instruction {
                     addressing_mode,
                 }
             }
+            LDX_ZERO_PAGE_Y => {
+                let addressing_mode = AddressingMode::zero_page_y(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::X,
+                    addressing_mode,
+                }
+            }
+
             TAX => Instruction::Trr {
                 origin: Register::A,
                 destination: Register::X,
