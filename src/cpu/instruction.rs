@@ -21,6 +21,14 @@ pub const LDA_INDIRECT_Y: u8 = 0xb1;
 pub const LDX_IMMEDIATE: u8 = 0xa2;
 pub const LDX_ZERO_PAGE: u8 = 0xa6;
 pub const LDX_ZERO_PAGE_Y: u8 = 0xb6;
+pub const LDX_ABSOLUTE: u8 = 0xae;
+pub const LDX_ABSOLUTE_Y: u8 = 0xbe;
+
+pub const LDY_IMMEDIATE: u8 = 0xa0;
+pub const LDY_ZERO_PAGE: u8 = 0xa4;
+pub const LDY_ZERO_PAGE_X: u8 = 0xb4;
+pub const LDY_ABSOLUTE: u8 = 0xac;
+pub const LDY_ABSOLUTE_X: u8 = 0xbc;
 
 pub const TAX: u8 = 0xaa;
 pub const INX: u8 = 0xe8;
@@ -259,7 +267,55 @@ impl Instruction {
                     addressing_mode,
                 }
             }
-
+            LDX_ABSOLUTE => {
+                let addressing_mode = AddressingMode::absolute(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::X,
+                    addressing_mode,
+                }
+            }
+            LDX_ABSOLUTE_Y => {
+                let addressing_mode = AddressingMode::absolute_y(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::X,
+                    addressing_mode,
+                }
+            }
+            LDY_IMMEDIATE => {
+                let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::Y,
+                    addressing_mode,
+                }
+            }
+            LDY_ZERO_PAGE => {
+                let addressing_mode = AddressingMode::zero_page(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::Y,
+                    addressing_mode,
+                }
+            }
+            LDY_ZERO_PAGE_X => {
+                let addressing_mode = AddressingMode::zero_page_x(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::Y,
+                    addressing_mode,
+                }
+            }
+            LDY_ABSOLUTE => {
+                let addressing_mode = AddressingMode::absolute(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::Y,
+                    addressing_mode,
+                }
+            }
+            LDY_ABSOLUTE_X => {
+                let addressing_mode = AddressingMode::absolute_x(memory, &mut program_counter)?;
+                Instruction::Ld {
+                    destination: Register::Y,
+                    addressing_mode,
+                }
+            }
             TAX => Instruction::Trr {
                 origin: Register::A,
                 destination: Register::X,
