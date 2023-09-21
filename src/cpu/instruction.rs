@@ -9,6 +9,15 @@ pub const ADC_ABSOLUTE_Y: u8 = 0x79;
 pub const ADC_INDIRECT_X: u8 = 0x61;
 pub const ADC_INDIRECT_Y: u8 = 0x71;
 
+pub const AND_IMMEDIATE: u8 = 0x29;
+pub const AND_ZERO_PAGE: u8 = 0x25;
+pub const AND_ZERO_PAGE_X: u8 = 0x35;
+pub const AND_ABSOLUTE: u8 = 0x2d;
+pub const AND_ABSOLUTE_X: u8 = 0x3d;
+pub const AND_ABSOLUTE_Y: u8 = 0x39;
+pub const AND_INDIRECT_X: u8 = 0x21;
+pub const AND_INDIRECT_Y: u8 = 0x31;
+
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
 pub const LDA_ZERO_PAGE_X: u8 = 0xb5;
@@ -135,6 +144,9 @@ pub enum Instruction {
     Adc {
         addressing_mode: AddressingMode,
     },
+    And {
+        addressing_mode: AddressingMode,
+    },
     Ld {
         destination: Register,
         addressing_mode: AddressingMode,
@@ -189,6 +201,38 @@ impl Instruction {
             ADC_INDIRECT_Y => {
                 let addressing_mode = AddressingMode::indirect_y(memory, &mut program_counter)?;
                 Instruction::Adc { addressing_mode }
+            }
+            AND_IMMEDIATE => {
+                let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_ZERO_PAGE => {
+                let addressing_mode = AddressingMode::zero_page(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_ZERO_PAGE_X => {
+                let addressing_mode = AddressingMode::zero_page_x(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_ABSOLUTE => {
+                let addressing_mode = AddressingMode::absolute(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_ABSOLUTE_X => {
+                let addressing_mode = AddressingMode::absolute_x(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_ABSOLUTE_Y => {
+                let addressing_mode = AddressingMode::absolute_y(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_INDIRECT_X => {
+                let addressing_mode = AddressingMode::indirect_x(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
+            }
+            AND_INDIRECT_Y => {
+                let addressing_mode = AddressingMode::indirect_y(memory, &mut program_counter)?;
+                Instruction::And { addressing_mode }
             }
             LDA_IMMEDIATE => {
                 let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;

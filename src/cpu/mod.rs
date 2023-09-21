@@ -172,7 +172,13 @@ impl Cpu {
 
                     self.status.set(Flags::Overflow, overflow_flag);
                     self.status.set(Flags::Carry, carry_flag);
-                    self.set_zero_and_negative(value)
+                    self.set_zero_and_negative(value);
+                }
+                And { addressing_mode } => {
+                    let value = self.read_address(addressing_mode)?;
+                    let value = self.register_a & value;
+                    self.register_a = value;
+                    self.set_zero_and_negative(value);
                 }
                 Ld {
                     destination,

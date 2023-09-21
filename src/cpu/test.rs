@@ -47,6 +47,52 @@ fn adc_immediate() {
 }
 
 #[test]
+fn and_immediate() {
+    assert!(matches!(
+        get_instruction(&[AND_IMMEDIATE, 0xc0]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![AND_IMMEDIATE, 0b11010011, 0x00])
+        .unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![
+        LDA_IMMEDIATE,
+        0b11010011,
+        AND_IMMEDIATE,
+        0b10110001,
+        0x00,
+    ])
+    .unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![
+        LDA_IMMEDIATE,
+        0b00110111,
+        AND_IMMEDIATE,
+        0b00110111,
+        0x00,
+    ])
+    .unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+}
+
+#[test]
 fn lda_immediate() {
     assert!(matches!(
         get_instruction(&[LDA_IMMEDIATE, 0xc0]).unwrap(),
@@ -128,6 +174,106 @@ fn ldy_immediate() {
     assert_eq!(cpu.register_y, 0x00);
     assert!(!cpu.status.get(Flags::Negative));
     assert!(cpu.status.get(Flags::Zero));
+}
+
+#[test]
+fn adc_zero_page() {
+    assert!(matches!(
+        get_instruction(&[ADC_ZERO_PAGE, 0xc0]).unwrap(),
+        (
+            Instruction::Adc {
+                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![ADC_ZERO_PAGE, 0x02, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0xf0, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_ZERO_PAGE, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x72, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_ZERO_PAGE, 0x03, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x80]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_zero_page() {
+    assert!(matches!(
+        get_instruction(&[AND_ZERO_PAGE, 0xc0]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_ZERO_PAGE, 0x02, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0xf0, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0b11010011, AND_ZERO_PAGE, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b10110001, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![LDA_IMMEDIATE, 0b00110111, AND_ZERO_PAGE, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b00110111, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
 }
 
 #[test]
@@ -224,6 +370,112 @@ fn ldy_zero_page() {
 }
 
 #[test]
+fn adc_zero_page_x() {
+    assert!(matches!(
+        get_instruction(&[ADC_ZERO_PAGE_X, 0xc0]).unwrap(),
+        (
+            Instruction::Adc {
+                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![ADC_ZERO_PAGE_X, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x02;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_ZERO_PAGE_X, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x72]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_ZERO_PAGE_X, 0x03, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x00;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x80]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_zero_page_x() {
+    assert!(matches!(
+        get_instruction(&[AND_ZERO_PAGE_X, 0xc0]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_ZERO_PAGE_X, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0xf0, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0b11010011, AND_ZERO_PAGE_X, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b10110001])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![LDA_IMMEDIATE, 0b00110111, AND_ZERO_PAGE_X, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x00;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b00110111, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+}
+
+#[test]
 fn lda_zero_page_x() {
     assert!(matches!(
         get_instruction(&[LDA_ZERO_PAGE_X, 0xc0]).unwrap(),
@@ -251,6 +503,38 @@ fn lda_zero_page_x() {
     cpu.load_and_run_test(vec![LDA_ZERO_PAGE_X, 0x02, 0x00])
         .unwrap();
     assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+}
+
+#[test]
+fn ldy_zero_page_x() {
+    assert!(matches!(
+        get_instruction(&[LDY_ZERO_PAGE_X, 0xc0]).unwrap(),
+        (
+            Instruction::Ld {
+                destination: Register::Y,
+                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+            },
+            0x8002,
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDY_ZERO_PAGE_X, 0x04, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0xff;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0xf4]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 0xf4);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![LDY_ZERO_PAGE_X, 0x02, 0x00])
+        .unwrap();
+    assert_eq!(cpu.register_y, 0x00);
     assert!(!cpu.status.get(Flags::Negative));
     assert!(cpu.status.get(Flags::Zero));
 }
@@ -288,35 +572,117 @@ fn ldx_zero_page_y() {
 }
 
 #[test]
-fn ldy_zero_page_x() {
+fn adc_absolute() {
     assert!(matches!(
-        get_instruction(&[LDY_ZERO_PAGE_X, 0xc0]).unwrap(),
+        get_instruction(&[ADC_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
-            Instruction::Ld {
-                destination: Register::Y,
-                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+            Instruction::Adc {
+                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
             },
-            0x8002,
+            0x8003
         )
     ));
 
     let mut cpu = Cpu::new();
-    cpu.load(vec![LDY_ZERO_PAGE_X, 0x02, 0x00]).unwrap();
+    cpu.load(vec![ADC_ABSOLUTE, 0x03, 0x01, 0x00]).unwrap();
     cpu.reset().unwrap();
     cpu.program_counter = 0x8000;
-    cpu.register_x = 0x01;
-    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0xf4]).unwrap();
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf0]).unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.register_y, 0xf4);
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_ABSOLUTE, 0x03, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0x72]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_ABSOLUTE, 0x02, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x80, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_absolute() {
+    assert!(matches!(
+        get_instruction(&[AND_ABSOLUTE, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_ABSOLUTE, 0x02, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[0x01, 0x02, 0xf0, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![
+        LDA_IMMEDIATE,
+        0b11010011,
+        AND_ABSOLUTE,
+        0x03,
+        0x01,
+        0x00,
+    ])
+    .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0x03, 0b10110001])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
     assert!(cpu.status.get(Flags::Negative));
     assert!(!cpu.status.get(Flags::Zero));
 
     let mut cpu = Cpu::new();
-    cpu.load_and_run_test(vec![LDY_ZERO_PAGE_X, 0x02, 0x00])
+    cpu.load_and_run_test(vec![
+        LDA_IMMEDIATE,
+        0b00110111,
+        AND_ABSOLUTE,
+        0x02,
+        0x01,
+        0x00,
+    ])
+    .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0b00110111, 0x04])
         .unwrap();
-    assert_eq!(cpu.register_y, 0x00);
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
     assert!(!cpu.status.get(Flags::Negative));
-    assert!(cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Zero));
 }
 
 #[test]
@@ -413,6 +779,126 @@ fn ldy_absolute() {
 }
 
 #[test]
+fn adc_absolute_x() {
+    assert!(matches!(
+        get_instruction(&[ADC_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Adc {
+                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![ADC_ABSOLUTE_X, 0x02, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_ABSOLUTE_X, 0x01, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x02;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0x72]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_ABSOLUTE_X, 0x02, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x00;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x80, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_absolute_x() {
+    assert!(matches!(
+        get_instruction(&[AND_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_ABSOLUTE_X, 0x01, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x1000, &[0x01, 0x02, 0xf0, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![
+        LDA_IMMEDIATE,
+        0b11010011,
+        AND_ABSOLUTE_X,
+        0x02,
+        0x01,
+        0x00,
+    ])
+    .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0x03, 0b10110001])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![
+        LDA_IMMEDIATE,
+        0b00110111,
+        AND_ABSOLUTE_X,
+        0x02,
+        0x01,
+        0x00,
+    ])
+    .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x00;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0b00110111, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+}
+
+#[test]
 fn lda_absolute_x() {
     assert!(matches!(
         get_instruction(&[LDA_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
@@ -442,6 +928,126 @@ fn lda_absolute_x() {
     assert_eq!(cpu.register_a, 0x00);
     assert!(!cpu.status.get(Flags::Negative));
     assert!(cpu.status.get(Flags::Zero));
+}
+
+#[test]
+fn adc_absolute_y() {
+    assert!(matches!(
+        get_instruction(&[ADC_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Adc {
+                addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![ADC_ABSOLUTE_Y, 0x02, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x01;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_ABSOLUTE_Y, 0x01, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x02;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0x72]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_ABSOLUTE_Y, 0x02, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x00;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x80, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_absolute_y() {
+    assert!(matches!(
+        get_instruction(&[AND_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_ABSOLUTE_Y, 0x01, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x01;
+    cpu.memory.load(0x1000, &[0x01, 0x02, 0xf0, 0x04]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![
+        LDA_IMMEDIATE,
+        0b11010011,
+        AND_ABSOLUTE_Y,
+        0x02,
+        0x01,
+        0x00,
+    ])
+    .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x01;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0x03, 0b10110001])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![
+        LDA_IMMEDIATE,
+        0b00110111,
+        AND_ABSOLUTE_Y,
+        0x02,
+        0x01,
+        0x00,
+    ])
+    .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x00;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0b00110111, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
 }
 
 #[test]
@@ -541,6 +1147,114 @@ fn ldx_absolute_y() {
 }
 
 #[test]
+fn adc_indirect_x() {
+    assert!(matches!(
+        get_instruction(&[ADC_INDIRECT_X, 0xab]).unwrap(),
+        (
+            Instruction::Adc {
+                addressing_mode: AddressingMode::IndirectX { address: 0xab }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![ADC_INDIRECT_X, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0403, &[0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_INDIRECT_X, 0x00, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0302, &[0x72]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_INDIRECT_X, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x00;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0403, &[0x80]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_indirect_x() {
+    assert!(matches!(
+        get_instruction(&[AND_INDIRECT_X, 0xab]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::IndirectX { address: 0xab }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_INDIRECT_X, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0xff;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0201, &[0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0b11010011, AND_INDIRECT_X, 0x01, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0403, &[0b10110001]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![LDA_IMMEDIATE, 0b00110111, AND_INDIRECT_X, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x00;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0403, &[0b00110111]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+}
+
+#[test]
 fn lda_indirect_x() {
     assert!(matches!(
         get_instruction(&[LDA_INDIRECT_X, 0xab]).unwrap(),
@@ -571,6 +1285,114 @@ fn lda_indirect_x() {
     assert_eq!(cpu.register_a, 0x00);
     assert!(!cpu.status.get(Flags::Negative));
     assert!(cpu.status.get(Flags::Zero));
+}
+
+#[test]
+fn adc_indirect_y() {
+    assert!(matches!(
+        get_instruction(&[ADC_INDIRECT_Y, 0xab]).unwrap(),
+        (
+            Instruction::Adc {
+                addressing_mode: AddressingMode::IndirectY { address: 0xab }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![ADC_INDIRECT_Y, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0303, &[0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0xf0);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(!cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x71, ADC_INDIRECT_Y, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x05;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0408, &[0x72]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, u8::wrapping_add(0x71, 0x72));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(!cpu.status.get(Flags::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0x80, ADC_INDIRECT_Y, 0x00, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x00;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0201, &[0x80]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0x00);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Overflow));
+    assert!(cpu.status.get(Flags::Carry));
+}
+
+#[test]
+fn and_indirect_y() {
+    assert!(matches!(
+        get_instruction(&[AND_INDIRECT_Y, 0xab]).unwrap(),
+        (
+            Instruction::And {
+                addressing_mode: AddressingMode::IndirectY { address: 0xab }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![AND_INDIRECT_Y, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x01;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0303, &[0xf0]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(vec![LDA_IMMEDIATE, 0b11010011, AND_INDIRECT_Y, 0x02, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x05;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0408, &[0b10110001]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b10010001);
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(vec![LDA_IMMEDIATE, 0b00110111, AND_INDIRECT_Y, 0x00, 0x00])
+        .unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 0x00;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0x04]).unwrap();
+    cpu.memory.load(0x0201, &[0b00110111]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_a, 0b00110111);
+    assert!(!cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Zero));
 }
 
 #[test]
