@@ -76,7 +76,7 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn load_and_run(&mut self, program: Vec<u8>) -> color_eyre::Result<()> {
+    pub fn load_and_run(&mut self, program: &[u8]) -> color_eyre::Result<()> {
         self.load(program)?;
         self.reset()?;
         self.run()?;
@@ -85,7 +85,7 @@ impl Cpu {
     }
 
     #[cfg(test)]
-    pub fn load_and_run_test(&mut self, program: Vec<u8>) -> color_eyre::Result<()> {
+    pub fn load_and_run_test(&mut self, program: &[u8]) -> color_eyre::Result<()> {
         self.load(program)?;
         self.reset()?;
         self.program_counter = 0x8000;
@@ -94,7 +94,7 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn load(&mut self, program: Vec<u8>) -> color_eyre::eyre::Result<()> {
+    pub fn load(&mut self, program: &[u8]) -> color_eyre::eyre::Result<()> {
         self.memory.load(0x8000, &program)?;
 
         Ok(())
