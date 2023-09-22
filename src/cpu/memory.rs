@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -33,6 +35,12 @@ mod test {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum CpuMemoryError {
+    #[error("memory address ({address}) out of bounds")]
+    IndexOutOfBounds { address: u16 },
+}
+
 pub struct Memory {
     memory: [u8; 0xFFFF],
 }
@@ -55,35 +63,29 @@ impl Memory {
     }
 }
 
-macro_rules! out_of_bounds {
-    () => {
-        color_eyre::eyre::eyre!("Index out of bounds.")
-    };
-}
-
 impl Memory {
-    pub fn read(&self, address: u16) -> color_eyre::eyre::Result<u8> {
+    pub fn read(&self, address: u16) -> Result<u8, CpuMemoryError> {
         self.memory
             .get(address as usize)
             .map(u8::clone)
-            .ok_or(out_of_bounds!())
+            .ok_or(CpuMemoryError::IndexOutOfBounds { address })
     }
 
-    pub fn read_u16(&self, address: u16) -> color_eyre::eyre::Result<u16> {
+    pub fn read_u16(&self, address: u16) -> Result<u16, CpuMemoryError> {
         let lo = self.read(address)? as u16;
         let hi = self.read(address + 1)? as u16;
         Ok((hi << 8) | lo)
     }
 
-    pub fn write(&mut self, address: u16, data: u8) -> color_eyre::eyre::Result<()> {
+    pub fn write(&mut self, address: u16, data: u8) -> Result<(), CpuMemoryError> {
         *self
             .memory
             .get_mut(address as usize)
-            .ok_or(out_of_bounds!())? = data;
+            .ok_or(CpuMemoryError::IndexOutOfBounds { address })? = data;
         Ok(())
     }
 
-    pub fn write_u16(&mut self, address: u16, data: u16) -> color_eyre::eyre::Result<()> {
+    pub fn write_u16(&mut self, address: u16, data: u16) -> Result<(), CpuMemoryError> {
         let hi = (data >> 8) as u8;
         let lo = (data & 0xff) as u8;
         self.write(address, lo)?;
@@ -91,11 +93,13 @@ impl Memory {
         Ok(())
     }
 
-    pub fn load(&mut self, address: u16, data: &[u8]) -> color_eyre::eyre::Result<()> {
+    pub fn load(&mut self, address: u16, data: &[u8]) -> Result<(), CpuMemoryError> {
         let address = address as usize;
         self.memory
             .get_mut(address..(address + data.len()))
-            .ok_or(out_of_bounds!())?
+            .ok_or(CpuMemoryError::IndexOutOfBounds {
+                address: address as u16,
+            })?
             .copy_from_slice(data);
         Ok(())
     }

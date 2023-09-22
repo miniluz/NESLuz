@@ -106,37 +106,37 @@ impl Cpu {
         use AddressingMode::*;
         match addressing_mode {
             Immediate { immediate } => Ok(immediate),
-            ZeroPage { address } => self.memory.read(address as u16),
+            ZeroPage { address } => Ok(self.memory.read(address as u16)?),
             ZeroPageX { address } => {
                 let address = address.wrapping_add(self.register_x);
-                self.memory.read(address as u16)
+                Ok(self.memory.read(address as u16)?)
             }
             ZeroPageY { address } => {
                 let address = address.wrapping_add(self.register_y);
-                self.memory.read(address as u16)
+                Ok(self.memory.read(address as u16)?)
             }
-            Absolute { address } => self.memory.read(address),
+            Absolute { address } => Ok(self.memory.read(address)?),
             AbsoluteX { address } => {
                 let address = address.wrapping_add(self.register_x as u16);
-                self.memory.read(address)
+                Ok(self.memory.read(address)?)
             }
             AbsoluteY { address } => {
                 let address = address.wrapping_add(self.register_y as u16);
-                self.memory.read(address)
+                Ok(self.memory.read(address)?)
             }
             IndirectX { address } => {
                 let base = address.wrapping_add(self.register_x);
                 let lo = self.memory.read(base as u16)?;
                 let hi = self.memory.read(base.wrapping_add(1) as u16)?;
                 let address = (hi as u16) << 8 | lo as u16;
-                self.memory.read(address)
+                Ok(self.memory.read(address)?)
             }
             IndirectY { address } => {
                 let lo = self.memory.read(address as u16)?;
                 let hi = self.memory.read(address.wrapping_add(1) as u16)?;
                 let address = (hi as u16) << 8 | lo as u16;
                 let address = address.wrapping_add(self.register_y as u16);
-                self.memory.read(address)
+                Ok(self.memory.read(address)?)
             }
         }
     }
