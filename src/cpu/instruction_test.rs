@@ -1,9 +1,40 @@
 use super::*;
+use instruction::opcodes::*;
 
 fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)> {
     let mut memory = Memory::new();
     memory.load(0x8000, instructions)?;
-    Instruction::get_instruction(&memory, &0x8000)
+    let instruction = Instruction::get_instruction(&memory, &0x8000)?;
+    Ok(instruction)
+}
+
+#[test]
+fn asl_accumulator() {
+    assert!(matches!(
+        get_instruction(&[ASL_ACCUMULATOR]).unwrap(),
+        (
+            Instruction::Asl {
+                addressing_mode: AddressingMode::Accumulator,
+            },
+            0x8001
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(&[LDA_IMMEDIATE, 0b10000000, ASL_ACCUMULATOR, 0x00])
+        .unwrap();
+    assert_eq!(cpu.register_a, 0b00000000);
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Carry));
+    assert!(!cpu.status.get(Flags::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(&[LDA_IMMEDIATE, 0b0101_0101, ASL_ACCUMULATOR, 0x00])
+        .unwrap();
+    assert_eq!(cpu.register_a, 0b1010_1010);
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Carry));
 }
 
 #[test]
@@ -258,6 +289,45 @@ fn and_zero_page() {
 }
 
 #[test]
+fn asl_zero_page() {
+    assert!(matches!(
+        get_instruction(&[ASL_ZERO_PAGE, 0xab]).unwrap(),
+        (
+            Instruction::Asl {
+                addressing_mode: AddressingMode::ZeroPage { address: 0xab }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ZERO_PAGE, 0x02, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b10000000, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x02).unwrap(), 0b00000000);
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Carry));
+    assert!(!cpu.status.get(Flags::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x03).unwrap(), 0b1010_1010);
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Carry));
+}
+
+#[test]
 fn lda_zero_page() {
     assert!(matches!(
         get_instruction(&[LDA_ZERO_PAGE, 0xc0]).unwrap(),
@@ -451,6 +521,47 @@ fn and_zero_page_x() {
     assert_eq!(cpu.register_a, 0b00110111);
     assert!(!cpu.status.get(Flags::Negative));
     assert!(!cpu.status.get(Flags::Zero));
+}
+
+#[test]
+fn asl_zero_page_x() {
+    assert!(matches!(
+        get_instruction(&[ASL_ZERO_PAGE_X, 0xab]).unwrap(),
+        (
+            Instruction::Asl {
+                addressing_mode: AddressingMode::ZeroPageX { address: 0xab }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ZERO_PAGE_X, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b10000000, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x02).unwrap(), 0b00000000);
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Carry));
+    assert!(!cpu.status.get(Flags::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.register_x = 0x00;
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x03).unwrap(), 0b1010_1010);
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Carry));
 }
 
 #[test]
@@ -650,6 +761,45 @@ fn and_absolute() {
 }
 
 #[test]
+fn asl_absolute() {
+    assert!(matches!(
+        get_instruction(&[ASL_ABSOLUTE, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Asl {
+                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ABSOLUTE, 0x02, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0b10000000, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x0102).unwrap(), 0b00000000);
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Carry));
+    assert!(!cpu.status.get(Flags::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ABSOLUTE, 0x03, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x0103).unwrap(), 0b1010_1010);
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Carry));
+}
+
+#[test]
 fn lda_absolute() {
     assert!(matches!(
         get_instruction(&[LDA_ABSOLUTE, 0xab, 0xcd]).unwrap(),
@@ -846,6 +996,47 @@ fn and_absolute_x() {
     assert_eq!(cpu.register_a, 0b00110111);
     assert!(!cpu.status.get(Flags::Negative));
     assert!(!cpu.status.get(Flags::Zero));
+}
+
+#[test]
+fn asl_absolute_x() {
+    assert!(matches!(
+        get_instruction(&[ASL_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Asl {
+                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ABSOLUTE_X, 0x01, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0b10000000, 0x04])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x0102).unwrap(), 0b00000000);
+    assert!(cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Carry));
+    assert!(!cpu.status.get(Flags::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[ASL_ABSOLUTE_X, 0x03, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.register_x = 0x00;
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x0100, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.memory.read(0x0103).unwrap(), 0b1010_1010);
+    assert!(!cpu.status.get(Flags::Zero));
+    assert!(cpu.status.get(Flags::Negative));
+    assert!(!cpu.status.get(Flags::Carry));
 }
 
 #[test]

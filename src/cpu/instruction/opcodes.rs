@@ -16,6 +16,12 @@ pub const AND_ABSOLUTE_Y: u8 = 0x39;
 pub const AND_INDIRECT_X: u8 = 0x21;
 pub const AND_INDIRECT_Y: u8 = 0x31;
 
+pub const ASL_ACCUMULATOR: u8 = 0x0a;
+pub const ASL_ZERO_PAGE: u8 = 0x06;
+pub const ASL_ZERO_PAGE_X: u8 = 0x16;
+pub const ASL_ABSOLUTE: u8 = 0x0e;
+pub const ASL_ABSOLUTE_X: u8 = 0x1e;
+
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
 pub const LDA_ZERO_PAGE_X: u8 = 0xb5;

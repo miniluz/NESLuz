@@ -3,9 +3,10 @@ mod memory;
 mod status;
 
 #[cfg(test)]
-mod test;
+mod instruction_test;
 
 use instruction::*;
+use thiserror::Error;
 
 use crate::cpu::status::Flags;
 
@@ -65,7 +66,7 @@ impl Cpu {
         self.status.set(Flags::Negative, (register_value as i8) < 0);
     }
 
-    pub fn reset(&mut self) -> color_eyre::Result<()> {
+    pub fn reset(&mut self) -> Result<(), CpuError> {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
@@ -94,51 +95,83 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn load(&mut self, program: &[u8]) -> color_eyre::eyre::Result<()> {
+    pub fn load(&mut self, program: &[u8]) -> Result<(), CpuError> {
         self.memory.load(0x8000, &program)?;
 
         Ok(())
     }
 }
 
+#[derive(Debug, Error)]
+pub enum CpuError {
+    #[error("tried to use accumulator addressing_mode")]
+    ReadAccumulatorAddressingMode,
+    #[error(transparent)]
+    CpuMemoryError(#[from] memory::CpuMemoryError),
+}
+
 impl Cpu {
-    pub fn read_address(&mut self, addressing_mode: AddressingMode) -> color_eyre::Result<u8> {
+    pub fn handle_addressing_mode(
+        &mut self,
+        addressing_mode: &AddressingMode,
+    ) -> Result<u16, CpuError> {
         use AddressingMode::*;
-        match addressing_mode {
-            Immediate { immediate } => Ok(immediate),
-            ZeroPage { address } => Ok(self.memory.read(address as u16)?),
+        let address = match addressing_mode {
+            Accumulator => return Err(CpuError::ReadAccumulatorAddressingMode),
+            Immediate { immediate } => *immediate as u16,
+            ZeroPage { address } => *address as u16,
             ZeroPageX { address } => {
                 let address = address.wrapping_add(self.register_x);
-                Ok(self.memory.read(address as u16)?)
+                address as u16
             }
             ZeroPageY { address } => {
                 let address = address.wrapping_add(self.register_y);
-                Ok(self.memory.read(address as u16)?)
+                address as u16
             }
-            Absolute { address } => Ok(self.memory.read(address)?),
+            Absolute { address } => *address,
             AbsoluteX { address } => {
                 let address = address.wrapping_add(self.register_x as u16);
-                Ok(self.memory.read(address)?)
+                address
             }
             AbsoluteY { address } => {
                 let address = address.wrapping_add(self.register_y as u16);
-                Ok(self.memory.read(address)?)
+                address
             }
             IndirectX { address } => {
                 let base = address.wrapping_add(self.register_x);
                 let lo = self.memory.read(base as u16)?;
                 let hi = self.memory.read(base.wrapping_add(1) as u16)?;
                 let address = (hi as u16) << 8 | lo as u16;
-                Ok(self.memory.read(address)?)
+                address
             }
             IndirectY { address } => {
-                let lo = self.memory.read(address as u16)?;
+                let lo = self.memory.read(*address as u16)?;
                 let hi = self.memory.read(address.wrapping_add(1) as u16)?;
                 let address = (hi as u16) << 8 | lo as u16;
                 let address = address.wrapping_add(self.register_y as u16);
-                Ok(self.memory.read(address)?)
+                address
             }
-        }
+        };
+        Ok(address)
+    }
+
+    pub fn read_address(&mut self, addressing_mode: &AddressingMode) -> Result<u8, CpuError> {
+        let value = if let AddressingMode::Immediate { immediate } = addressing_mode {
+            *immediate
+        } else {
+            let address = self.handle_addressing_mode(addressing_mode)?;
+            self.memory.read(address)?
+        };
+        Ok(value)
+    }
+    pub fn write_address(
+        &mut self,
+        addressing_mode: &AddressingMode,
+        data: u8,
+    ) -> Result<(), CpuError> {
+        let address = self.handle_addressing_mode(addressing_mode)?;
+        self.memory.write(address, data)?;
+        Ok(())
     }
 
     pub fn run(&mut self) -> color_eyre::Result<()> {
@@ -152,7 +185,7 @@ impl Cpu {
             match instruction {
                 Break => break,
                 Adc { addressing_mode } => {
-                    let value = self.read_address(addressing_mode)?;
+                    let value = self.read_address(&addressing_mode)?;
                     let carry = self.status.get(Flags::Carry) as u8;
 
                     let carry_flag = {
@@ -175,16 +208,33 @@ impl Cpu {
                     self.set_zero_and_negative(value);
                 }
                 And { addressing_mode } => {
-                    let value = self.read_address(addressing_mode)?;
+                    let value = self.read_address(&addressing_mode)?;
                     let value = self.register_a & value;
                     self.register_a = value;
                     self.set_zero_and_negative(value);
+                }
+                Asl { addressing_mode } => {
+                    let value = if let AddressingMode::Accumulator = addressing_mode {
+                        self.register_a
+                    } else {
+                        self.read_address(&addressing_mode)?
+                    };
+
+                    self.status.set(Flags::Carry, (value as i8) < 0);
+                    let value = value.wrapping_shl(1);
+                    self.set_zero_and_negative(value);
+
+                    if let AddressingMode::Accumulator = addressing_mode {
+                        self.register_a = value;
+                    } else {
+                        self.write_address(&addressing_mode, value)?;
+                    }
                 }
                 Ld {
                     destination,
                     addressing_mode,
                 } => {
-                    let value = self.read_address(addressing_mode)?;
+                    let value = self.read_address(&addressing_mode)?;
                     self.set_register(&destination, value);
                     self.set_zero_and_negative(value);
                 }

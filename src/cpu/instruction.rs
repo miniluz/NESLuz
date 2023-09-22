@@ -1,11 +1,16 @@
-use super::{memory::Memory, Register};
+use super::{
+    memory::{CpuMemoryError, Memory},
+    Register,
+};
 
-mod opcodes;
+pub mod opcodes;
 
 use opcodes::*;
+use thiserror::Error;
 
 #[derive(Debug)]
 pub enum AddressingMode {
+    Accumulator,
     Immediate { immediate: u8 },
     ZeroPage { address: u8 },
     ZeroPageX { address: u8 },
@@ -21,7 +26,7 @@ impl AddressingMode {
     pub fn immediate(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let immediate = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::Immediate { immediate })
@@ -30,7 +35,7 @@ impl AddressingMode {
     pub fn zero_page(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::ZeroPage { address })
@@ -39,7 +44,7 @@ impl AddressingMode {
     pub fn zero_page_x(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address: u8 = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::ZeroPageX { address })
@@ -48,7 +53,7 @@ impl AddressingMode {
     pub fn zero_page_y(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address: u8 = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::ZeroPageY { address })
@@ -57,7 +62,7 @@ impl AddressingMode {
     pub fn absolute(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
         Ok(AddressingMode::Absolute { address })
@@ -66,7 +71,7 @@ impl AddressingMode {
     pub fn absolute_x(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
         Ok(AddressingMode::AbsoluteX { address })
@@ -75,7 +80,7 @@ impl AddressingMode {
     pub fn absolute_y(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
         Ok(AddressingMode::AbsoluteY { address })
@@ -84,7 +89,7 @@ impl AddressingMode {
     pub fn indirect_x(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::IndirectX { address })
@@ -93,7 +98,7 @@ impl AddressingMode {
     pub fn indirect_y(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> color_eyre::Result<AddressingMode> {
+    ) -> Result<AddressingMode, CpuMemoryError> {
         let address = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::IndirectY { address })
@@ -109,6 +114,9 @@ pub enum Instruction {
     And {
         addressing_mode: AddressingMode,
     },
+    Asl {
+        addressing_mode: AddressingMode,
+    },
     Ld {
         destination: Register,
         addressing_mode: AddressingMode,
@@ -122,11 +130,19 @@ pub enum Instruction {
     },
 }
 
+#[derive(Debug, Error)]
+pub enum InstructionError {
+    #[error("invalid instruction code {:#03x}", code)]
+    InvalidInstructionCode { code: u8 },
+    #[error(transparent)]
+    CpuMemoryError(#[from] CpuMemoryError),
+}
+
 impl Instruction {
     pub fn get_instruction(
         memory: &Memory,
         program_counter: &u16,
-    ) -> color_eyre::Result<(Instruction, u16)> {
+    ) -> Result<(Instruction, u16), InstructionError> {
         let mut program_counter = *program_counter;
         let instruction = memory.read(program_counter)?;
         program_counter += 1;
@@ -195,6 +211,25 @@ impl Instruction {
             AND_INDIRECT_Y => {
                 let addressing_mode = AddressingMode::indirect_y(memory, &mut program_counter)?;
                 Instruction::And { addressing_mode }
+            }
+            ASL_ACCUMULATOR => Instruction::Asl {
+                addressing_mode: AddressingMode::Accumulator,
+            },
+            ASL_ZERO_PAGE => {
+                let addressing_mode = AddressingMode::zero_page(memory, &mut program_counter)?;
+                Instruction::Asl { addressing_mode }
+            }
+            ASL_ZERO_PAGE_X => {
+                let addressing_mode = AddressingMode::zero_page_x(memory, &mut program_counter)?;
+                Instruction::Asl { addressing_mode }
+            }
+            ASL_ABSOLUTE => {
+                let addressing_mode = AddressingMode::absolute(memory, &mut program_counter)?;
+                Instruction::Asl { addressing_mode }
+            }
+            ASL_ABSOLUTE_X => {
+                let addressing_mode = AddressingMode::absolute_x(memory, &mut program_counter)?;
+                Instruction::Asl { addressing_mode }
             }
             LDA_IMMEDIATE => {
                 let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;
@@ -329,10 +364,8 @@ impl Instruction {
             INX => Instruction::In {
                 destination: Register::X,
             },
-            _ => {
-                return Err(color_eyre::eyre::eyre!(
-                    "Should have been able to find instruction!"
-                ));
+            code => {
+                return Err(InstructionError::InvalidInstructionCode { code });
             }
         };
 
