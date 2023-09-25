@@ -661,6 +661,43 @@ fn ldx_zero_page_y() {
 }
 
 #[test]
+fn bcc() {
+    assert!(matches!(
+        get_instruction(&[BCC, 0x0b]).unwrap(),
+        (
+            Instruction::Bcc {
+                addressing_mode: AddressingMode::Relative { offset: 0x0b }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCC, 0x00, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCC, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x800b);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCC, 0xf8, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.run().unwrap();
+    assert_eq!(
+        cpu.program_counter,
+        0x8003u16.wrapping_add(0xf8u8 as i8 as u16)
+    );
+}
+
+#[test]
 fn adc_absolute() {
     assert!(matches!(
         get_instruction(&[ADC_ABSOLUTE, 0xab, 0xcd]).unwrap(),

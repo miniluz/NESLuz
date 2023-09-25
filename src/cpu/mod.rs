@@ -128,6 +128,7 @@ impl Cpu {
                 let address = address.wrapping_add(self.register_y);
                 address as u16
             }
+            Relative { offset } => self.program_counter.wrapping_add(*offset as u16),
             Absolute { address } => *address,
             AbsoluteX { address } => {
                 let address = address.wrapping_add(self.register_x as u16);
@@ -229,6 +230,10 @@ impl Cpu {
                     } else {
                         self.write_address(&addressing_mode, value)?;
                     }
+                }
+                Bcc { addressing_mode } => {
+                    let new_address = self.handle_addressing_mode(&addressing_mode)?;
+                    self.program_counter = new_address;
                 }
                 Ld {
                     destination,

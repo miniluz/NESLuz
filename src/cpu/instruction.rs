@@ -15,6 +15,7 @@ pub enum AddressingMode {
     ZeroPage { address: u8 },
     ZeroPageX { address: u8 },
     ZeroPageY { address: u8 },
+    Relative { offset: i8 },
     Absolute { address: u16 },
     AbsoluteX { address: u16 },
     AbsoluteY { address: u16 },
@@ -57,6 +58,15 @@ impl AddressingMode {
         let address: u8 = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(AddressingMode::ZeroPageY { address })
+    }
+
+    pub fn relative(
+        memory: &Memory,
+        program_counter: &mut u16,
+    ) -> Result<AddressingMode, CpuMemoryError> {
+        let offset = memory.read(*program_counter)? as i8;
+        *program_counter += 1;
+        Ok(AddressingMode::Relative { offset })
     }
 
     pub fn absolute(
@@ -115,6 +125,9 @@ pub enum Instruction {
         addressing_mode: AddressingMode,
     },
     Asl {
+        addressing_mode: AddressingMode,
+    },
+    Bcc {
         addressing_mode: AddressingMode,
     },
     Ld {
@@ -230,6 +243,10 @@ impl Instruction {
             ASL_ABSOLUTE_X => {
                 let addressing_mode = AddressingMode::absolute_x(memory, &mut program_counter)?;
                 Instruction::Asl { addressing_mode }
+            }
+            BCC => {
+                let addressing_mode = AddressingMode::relative(memory, &mut program_counter)?;
+                Instruction::Bcc { addressing_mode }
             }
             LDA_IMMEDIATE => {
                 let addressing_mode = AddressingMode::immediate(memory, &mut program_counter)?;
