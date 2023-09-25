@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum Flags {
+pub enum Flag {
     Carry,
     Zero,
     InterruptDisable,
@@ -8,9 +8,9 @@ pub enum Flags {
     Negative,
 }
 
-impl From<Flags> for u8 {
-    fn from(value: Flags) -> Self {
-        use Flags::*;
+impl From<Flag> for u8 {
+    fn from(value: Flag) -> Self {
+        use Flag::*;
         match value {
             Carry => 0b0000_0001,
             Zero => 0b0000_0010,
@@ -32,7 +32,7 @@ impl Status {
         Status { flags: 0b0000_0000 }
     }
 
-    pub fn set(&mut self, flag: Flags, condition: bool) {
+    pub fn set(&mut self, flag: Flag, condition: bool) {
         if condition {
             self.flags |= u8::from(flag);
         } else {
@@ -40,7 +40,7 @@ impl Status {
         }
     }
 
-    pub fn get(&self, flag: Flags) -> bool {
+    pub fn get(&self, flag: Flag) -> bool {
         self.flags & u8::from(flag) != 0b0000_0000
     }
 }

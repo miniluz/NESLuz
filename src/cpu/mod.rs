@@ -8,7 +8,7 @@ mod instruction_test;
 use instruction::*;
 use thiserror::Error;
 
-use crate::cpu::status::Flags;
+use crate::cpu::status::Flag;
 
 use self::{memory::Memory, status::Status};
 
@@ -62,8 +62,8 @@ impl Cpu {
 
 impl Cpu {
     fn set_zero_and_negative(&mut self, register_value: u8) {
-        self.status.set(Flags::Zero, register_value == 0);
-        self.status.set(Flags::Negative, (register_value as i8) < 0);
+        self.status.set(Flag::Zero, register_value == 0);
+        self.status.set(Flag::Negative, (register_value as i8) < 0);
     }
 
     pub fn reset(&mut self) -> Result<(), CpuError> {
@@ -187,7 +187,7 @@ impl Cpu {
                 Break => break,
                 Adc { addressing_mode } => {
                     let value = self.read_address(&addressing_mode)?;
-                    let carry = self.status.get(Flags::Carry) as u8;
+                    let carry = self.status.get(Flag::Carry) as u8;
 
                     let carry_flag = {
                         let (value, first_carry) = self.register_a.overflowing_add(value);
@@ -204,8 +204,8 @@ impl Cpu {
 
                     self.register_a = value;
 
-                    self.status.set(Flags::Overflow, overflow_flag);
-                    self.status.set(Flags::Carry, carry_flag);
+                    self.status.set(Flag::Overflow, overflow_flag);
+                    self.status.set(Flag::Carry, carry_flag);
                     self.set_zero_and_negative(value);
                 }
                 And { addressing_mode } => {
@@ -221,7 +221,7 @@ impl Cpu {
                         self.read_address(&addressing_mode)?
                     };
 
-                    self.status.set(Flags::Carry, (value as i8) < 0);
+                    self.status.set(Flag::Carry, (value as i8) < 0);
                     let value = value.wrapping_shl(1);
                     self.set_zero_and_negative(value);
 
@@ -255,7 +255,7 @@ impl Cpu {
                     let value = self.get_register(&destination);
                     let (value, overflow) = value.overflowing_add(1);
                     self.set_register(&destination, value);
-                    self.status.set(Flags::Overflow, overflow);
+                    self.status.set(Flag::Overflow, overflow);
                     self.set_zero_and_negative(value);
                 }
             }
