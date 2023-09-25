@@ -1,5 +1,10 @@
 use thiserror::Error;
 
+#[derive(Debug)]
+pub struct Address {
+    address: u16,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

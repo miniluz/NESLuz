@@ -10,7 +10,7 @@ use thiserror::Error;
 
 use crate::cpu::status::Flag;
 
-use self::{memory::Memory, status::Status};
+use self::{instruction::addressing_mode::AddressingMode, memory::Memory, status::Status};
 
 #[derive(Debug)]
 pub struct Cpu {

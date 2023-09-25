@@ -1,4 +1,5 @@
 use super::*;
+use instruction::addressing_mode::AddressingMode;
 use instruction::opcodes::*;
 
 fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)> {
