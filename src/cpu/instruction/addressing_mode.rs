@@ -33,6 +33,7 @@ pub struct Implicit {}
 
 #[derive(Debug)]
 pub struct Accumulator {}
+
 #[derive(Debug)]
 pub struct Immediate {
     pub immediate: u8,
@@ -43,6 +44,12 @@ impl Immediate {
         let immediate = memory.read(*program_counter)?;
         *program_counter += 1;
         Ok(Immediate { immediate })
+    }
+}
+
+impl TryIntoValue for Immediate {
+    fn try_into_value(&self, _cpu: &Cpu) -> Result<u8, CpuError> {
+        Ok(self.immediate)
     }
 }
 
@@ -85,7 +92,7 @@ impl ZeroPageY {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, TryIntoValue)]
 pub struct Relative {
     pub offset: i8,
 }
@@ -130,10 +137,7 @@ pub struct AbsoluteY {
 }
 
 impl AbsoluteY {
-    pub fn absolute_y(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AbsoluteY, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<AbsoluteY, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
         Ok(AbsoluteY { address })
