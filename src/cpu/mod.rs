@@ -1,6 +1,6 @@
-mod instruction;
-mod memory;
-mod status;
+pub mod instruction;
+pub mod memory;
+pub mod status;
 
 #[cfg(test)]
 mod instruction_test;
@@ -10,7 +10,7 @@ use thiserror::Error;
 
 use crate::cpu::status::Flag;
 
-use self::{instruction::addressing_mode::AddressingMode, memory::Memory, status::Status};
+use self::{instruction::addressing_mode::TryIntoAddress, memory::Memory, status::Status};
 
 #[derive(Debug)]
 pub struct Cpu {
@@ -111,70 +111,6 @@ pub enum CpuError {
 }
 
 impl Cpu {
-    pub fn handle_addressing_mode(
-        &mut self,
-        addressing_mode: &AddressingMode,
-    ) -> Result<u16, CpuError> {
-        use AddressingMode::*;
-        let address = match addressing_mode {
-            Accumulator => return Err(CpuError::ReadAccumulatorAddressingMode),
-            Immediate { immediate } => *immediate as u16,
-            ZeroPage { address } => *address as u16,
-            ZeroPageX { address } => {
-                let address = address.wrapping_add(self.register_x);
-                address as u16
-            }
-            ZeroPageY { address } => {
-                let address = address.wrapping_add(self.register_y);
-                address as u16
-            }
-            Relative { offset } => self.program_counter.wrapping_add(*offset as u16),
-            Absolute { address } => *address,
-            AbsoluteX { address } => {
-                let address = address.wrapping_add(self.register_x as u16);
-                address
-            }
-            AbsoluteY { address } => {
-                let address = address.wrapping_add(self.register_y as u16);
-                address
-            }
-            IndirectX { address } => {
-                let base = address.wrapping_add(self.register_x);
-                let lo = self.memory.read(base as u16)?;
-                let hi = self.memory.read(base.wrapping_add(1) as u16)?;
-                let address = (hi as u16) << 8 | lo as u16;
-                address
-            }
-            IndirectY { address } => {
-                let lo = self.memory.read(*address as u16)?;
-                let hi = self.memory.read(address.wrapping_add(1) as u16)?;
-                let address = (hi as u16) << 8 | lo as u16;
-                let address = address.wrapping_add(self.register_y as u16);
-                address
-            }
-        };
-        Ok(address)
-    }
-
-    pub fn read_address(&mut self, addressing_mode: &AddressingMode) -> Result<u8, CpuError> {
-        let value = if let AddressingMode::Immediate { immediate } = addressing_mode {
-            *immediate
-        } else {
-            let address = self.handle_addressing_mode(addressing_mode)?;
-            self.memory.read(address)?
-        };
-        Ok(value)
-    }
-    pub fn write_address(
-        &mut self,
-        addressing_mode: &AddressingMode,
-        data: u8,
-    ) -> Result<(), CpuError> {
-        let address = self.handle_addressing_mode(addressing_mode)?;
-        self.memory.write(address, data)?;
-        Ok(())
-    }
-
     pub fn run(&mut self) -> color_eyre::Result<()> {
         loop {
             let (instruction, program_counter) =

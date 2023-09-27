@@ -1,108 +1,241 @@
-use crate::cpu::memory::{CpuMemoryError, Memory};
+use crate::cpu::{
+    memory::{CpuMemoryError, Memory},
+    Cpu, CpuError,
+};
 
-#[derive(Debug)]
-pub enum AddressingMode {
-    Accumulator,
-    Immediate { immediate: u8 },
-    ZeroPage { address: u8 },
-    ZeroPageX { address: u8 },
-    ZeroPageY { address: u8 },
-    Relative { offset: i8 },
-    Absolute { address: u16 },
-    AbsoluteX { address: u16 },
-    AbsoluteY { address: u16 },
-    IndirectX { address: u8 },
-    IndirectY { address: u8 },
+use derives::TryIntoValue;
+
+#[cfg(test)]
+mod derive_try_into_value_test {
+    use crate::cpu::{instruction::addressing_mode::TryIntoAddress, Cpu, CpuError};
+
+    #[test]
+    fn derive_try_into_value() {
+        #[derive(derives::TryIntoValue)]
+        struct AddressingMode {
+            pub address: u8,
+        }
+
+        impl TryIntoAddress for AddressingMode {
+            fn try_into_address(&self, _cpu: &Cpu) -> Result<u16, CpuError> {
+                Ok(self.address as u16)
+            }
+        }
+    }
 }
 
-impl AddressingMode {
-    pub fn immediate(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+pub struct Address {
+    address: u16,
+}
+
+#[derive(Debug)]
+pub struct Implicit {}
+
+#[derive(Debug)]
+pub struct Accumulator {}
+#[derive(Debug)]
+pub struct Immediate {
+    pub immediate: u8,
+}
+
+impl Immediate {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<Immediate, CpuMemoryError> {
         let immediate = memory.read(*program_counter)?;
         *program_counter += 1;
-        Ok(AddressingMode::Immediate { immediate })
+        Ok(Immediate { immediate })
     }
+}
 
-    pub fn zero_page(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct ZeroPage {
+    pub address: u8,
+}
+
+impl ZeroPage {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<ZeroPage, CpuMemoryError> {
         let address = memory.read(*program_counter)?;
         *program_counter += 1;
-        Ok(AddressingMode::ZeroPage { address })
+        Ok(ZeroPage { address })
     }
+}
 
-    pub fn zero_page_x(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct ZeroPageX {
+    pub address: u8,
+}
+
+impl ZeroPageX {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<ZeroPageX, CpuMemoryError> {
         let address: u8 = memory.read(*program_counter)?;
         *program_counter += 1;
-        Ok(AddressingMode::ZeroPageX { address })
+        Ok(ZeroPageX { address })
     }
+}
 
-    pub fn zero_page_y(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct ZeroPageY {
+    pub address: u8,
+}
+
+impl ZeroPageY {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<ZeroPageY, CpuMemoryError> {
         let address: u8 = memory.read(*program_counter)?;
         *program_counter += 1;
-        Ok(AddressingMode::ZeroPageY { address })
+        Ok(ZeroPageY { address })
     }
+}
 
-    pub fn relative(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug)]
+pub struct Relative {
+    pub offset: i8,
+}
+
+impl Relative {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<Relative, CpuMemoryError> {
         let offset = memory.read(*program_counter)? as i8;
         *program_counter += 1;
-        Ok(AddressingMode::Relative { offset })
+        Ok(Relative { offset })
     }
+}
 
-    pub fn absolute(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct Absolute {
+    pub address: u16,
+}
+
+impl Absolute {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<Absolute, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
-        Ok(AddressingMode::Absolute { address })
+        Ok(Absolute { address })
     }
+}
 
-    pub fn absolute_x(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct AbsoluteX {
+    pub address: u16,
+}
+
+impl AbsoluteX {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<AbsoluteX, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
-        Ok(AddressingMode::AbsoluteX { address })
+        Ok(AbsoluteX { address })
     }
+}
 
+#[derive(Debug, TryIntoValue)]
+pub struct AbsoluteY {
+    pub address: u16,
+}
+
+impl AbsoluteY {
     pub fn absolute_y(
         memory: &Memory,
         program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+    ) -> Result<AbsoluteY, CpuMemoryError> {
         let address = memory.read_u16(*program_counter)?;
         *program_counter += 2;
-        Ok(AddressingMode::AbsoluteY { address })
+        Ok(AbsoluteY { address })
     }
+}
 
-    pub fn indirect_x(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct IndirectX {
+    pub address: u8,
+}
+
+impl IndirectX {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<IndirectX, CpuMemoryError> {
         let address = memory.read(*program_counter)?;
         *program_counter += 1;
-        Ok(AddressingMode::IndirectX { address })
+        Ok(IndirectX { address })
     }
+}
 
-    pub fn indirect_y(
-        memory: &Memory,
-        program_counter: &mut u16,
-    ) -> Result<AddressingMode, CpuMemoryError> {
+#[derive(Debug, TryIntoValue)]
+pub struct IndirectY {
+    pub address: u8,
+}
+
+impl IndirectY {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<IndirectY, CpuMemoryError> {
         let address = memory.read(*program_counter)?;
         *program_counter += 1;
-        Ok(AddressingMode::IndirectY { address })
+        Ok(IndirectY { address })
+    }
+}
+
+pub trait TryIntoAddress {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError>;
+}
+
+pub trait TryIntoValue {
+    fn try_into_value(&self, cpu: &Cpu) -> Result<u8, CpuError>;
+}
+
+impl TryIntoAddress for ZeroPage {
+    fn try_into_address(&self, _cpu: &Cpu) -> Result<u16, CpuError> {
+        Ok(self.address as u16)
+    }
+}
+
+impl TryIntoAddress for ZeroPageX {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        let address = self.address.wrapping_add(cpu.register_x);
+        Ok(address as u16)
+    }
+}
+
+impl TryIntoAddress for ZeroPageY {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        let address = self.address.wrapping_add(cpu.register_y);
+        Ok(address as u16)
+    }
+}
+
+impl TryIntoAddress for Relative {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        Ok(cpu.program_counter.wrapping_add(self.offset as u16))
+    }
+}
+
+impl TryIntoAddress for Absolute {
+    fn try_into_address(&self, _cpu: &Cpu) -> Result<u16, CpuError> {
+        Ok(self.address)
+    }
+}
+
+impl TryIntoAddress for AbsoluteX {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        let address = self.address.wrapping_add(cpu.register_x as u16);
+        Ok(address)
+    }
+}
+
+impl TryIntoAddress for AbsoluteY {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        let address = self.address.wrapping_add(cpu.register_y as u16);
+        Ok(address)
+    }
+}
+
+impl TryIntoAddress for IndirectX {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        let base = self.address.wrapping_add(cpu.register_x);
+        let lo = cpu.memory.read(base as u16)?;
+        let hi = cpu.memory.read(base.wrapping_add(1) as u16)?;
+        let address = (hi as u16) << 8 | lo as u16;
+        Ok(address)
+    }
+}
+
+impl TryIntoAddress for IndirectY {
+    fn try_into_address(&self, cpu: &Cpu) -> Result<u16, CpuError> {
+        let lo = cpu.memory.read(self.address as u16)?;
+        let hi = cpu.memory.read(self.address.wrapping_add(1) as u16)?;
+        let address = (hi as u16) << 8 | lo as u16;
+        let address = address.wrapping_add(cpu.register_y as u16);
+        Ok(address)
     }
 }

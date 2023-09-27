@@ -9,7 +9,6 @@ pub mod opcodes;
 use opcodes::*;
 
 pub mod addressing_mode;
-use addressing_mode::*;
 
 #[derive(Debug)]
 pub enum Instruction {

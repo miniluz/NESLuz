@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 color-eyre = "0.6.2"
+derives = { version = "0.1.0", path = "derives" }
 thiserror = "1.0.48"
