@@ -111,7 +111,7 @@ pub fn derive_addressing_enums(input: TokenStream) -> TokenStream {
                 "indirect" => Ok(VAD(Indirect)),
                 "indirect_x" => Ok(VAD(IndirectX)),
                 "indirect_y" => Ok(VAD(IndirectY)),
-                _ => Err("Invalid type; expected implicit, accumulator, immediate, zero_page, zero_page_x, zero_page_y, relative, absolute, absolute_x, absolute_y, indirect, indirect_x or indirect_y"),
+                _ => Err("Invalid type; expected accumulator, immediate, zero_page, zero_page_x, zero_page_y, relative, absolute, absolute_x, absolute_y, indirect, indirect_x or indirect_y"),
             }
         }
     }
@@ -210,11 +210,11 @@ pub fn derive_addressing_enums(input: TokenStream) -> TokenStream {
     }
 
     let struct_name = only_first_capitalized(&options.ident.to_string());
-    let enum_name = format_ident!("{}AddressingModes", struct_name);
+    let enum_name = format_ident!("{}AddressingMode", struct_name);
 
     let output = if let Some(implicit_mode) = implicit_mode {
         let implicit_variant = proc_macro2::TokenStream::from(implicit_mode);
-        let value_name = format_ident!("{}ValueAddressingModes", struct_name);
+        let value_name = format_ident!("{}ValueAddressingMode", struct_name);
 
         let value_enum = get_value_enum(&value_name, value_modes);
 
