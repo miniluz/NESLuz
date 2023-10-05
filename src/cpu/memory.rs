@@ -15,7 +15,7 @@ mod test {
         memory.load(0x8000, &[0x01, 0x02, 0x03, 0x04]).unwrap();
         assert_eq!(memory.memory[..0x8000], [0; 0x8000]);
         assert_eq!(memory.memory[0x8000..0x8004], [0x01, 0x02, 0x03, 0x04]);
-        assert_eq!(memory.memory[0x8004..], [0; 0x8000 - 4 - 1]);
+        assert_eq!(memory.memory[0x8004..], [0; 0x8000 - 4]);
     }
 
     #[test]
