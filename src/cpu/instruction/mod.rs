@@ -9,6 +9,9 @@ use thiserror::Error;
 pub mod opcodes;
 use opcodes::*;
 
+#[cfg(test)]
+mod tests;
+
 pub mod addressing_mode;
 use addressing_mode as AM;
 

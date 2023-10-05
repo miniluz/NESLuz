@@ -3,9 +3,6 @@ pub mod memory;
 pub mod status;
 
 #[cfg(test)]
-mod instruction_test;
-
-#[cfg(test)]
 mod macro_test;
 
 use instruction::*;

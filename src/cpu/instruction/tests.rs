@@ -1,6 +1,8 @@
+use super::addressing_mode as AM;
+use super::opcodes::*;
 use super::*;
-use instruction::addressing_mode as AM;
-use instruction::opcodes::*;
+use crate::cpu::status::Flag;
+use crate::cpu::Cpu;
 
 fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)> {
     let mut memory = Memory::new();

@@ -1,9 +1,5 @@
 use crate::cpu::{memory::Memory, Cpu};
 
-pub struct Address {
-    address: u16,
-}
-
 pub trait IntoAddress {
     fn into_address(&self, cpu: &Cpu) -> u16;
 }
