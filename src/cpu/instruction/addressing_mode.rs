@@ -23,13 +23,13 @@ impl<T: IntoAddress> IntoValue for T {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Implicit {}
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Accumulator {}
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Immediate {
     pub immediate: u8,
 }
@@ -48,7 +48,7 @@ impl IntoValue for Immediate {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ZeroPage {
     pub address: u8,
 }
@@ -61,7 +61,7 @@ impl ZeroPage {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ZeroPageX {
     pub address: u8,
 }
@@ -74,7 +74,7 @@ impl ZeroPageX {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ZeroPageY {
     pub address: u8,
 }
@@ -87,7 +87,7 @@ impl ZeroPageY {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Relative {
     pub offset: i8,
 }
@@ -100,7 +100,7 @@ impl Relative {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Absolute {
     pub address: u16,
 }
@@ -113,7 +113,7 @@ impl Absolute {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct AbsoluteX {
     pub address: u16,
 }
@@ -126,7 +126,7 @@ impl AbsoluteX {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct AbsoluteY {
     pub address: u16,
 }
@@ -139,7 +139,7 @@ impl AbsoluteY {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Indirect {
     pub address: u8,
 }
@@ -152,7 +152,7 @@ impl Indirect {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct IndirectX {
     pub address: u8,
 }
@@ -165,7 +165,7 @@ impl IndirectX {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct IndirectY {
     pub address: u8,
 }

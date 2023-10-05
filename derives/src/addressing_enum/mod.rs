@@ -20,8 +20,8 @@ pub fn parse_variant(input: Variant) -> TokenStream {
 
         quote!(
             #[automatically_derived]
-            #[derive(Debug)]
-            enum #enum_name {
+            #[derive(Debug, Copy, Clone)]
+            pub enum #enum_name {
                 #( #address_modes { mode: crate::cpu::instruction::addressing_mode::#address_modes },)*
             }
 
@@ -58,8 +58,8 @@ pub fn parse_variant(input: Variant) -> TokenStream {
                 let address_variant: TokenStream = address_modes[0].into();
                 (
                     quote!(
-                        #[derive(Debug)]
-                        enum #enum_name {
+                        #[derive(Debug, Copy, Clone)]
+                        pub enum #enum_name {
                             #value_variant { mode: crate::cpu::instruction::addressing_mode::#value_variant },
                             #address_variant { mode: crate::cpu::instruction::addressing_mode::#address_variant },
                         }
@@ -83,8 +83,8 @@ pub fn parse_variant(input: Variant) -> TokenStream {
                         #address_enum
 
                         #[automatically_derived]
-                        #[derive(Debug)]
-                        enum #enum_name {
+                        #[derive(Debug, Copy, Clone)]
+                        pub enum #enum_name {
                             #value_variant { mode: crate::cpu::instruction::addressing_mode::#value_variant },
                             #address_enum_name { mode: #address_enum_name }
                         }
@@ -135,8 +135,8 @@ pub fn parse_variant(input: Variant) -> TokenStream {
                     ValueAddressingMode::AddressAddressingMode(mode) => mode.into(),
                 };
                 quote!(
-                    #[derive(Debug)]
-                    enum #enum_name {
+                    #[derive(Debug, Copy, Clone)]
+                    pub enum #enum_name {
                         #implicit_variant { mode: crate::cpu::instruction::addressing_mode::#implicit_variant },
                         #value_variant { mode: crate::cpu::instruction::addressing_mode::#value_variant },
                     }
@@ -150,8 +150,8 @@ pub fn parse_variant(input: Variant) -> TokenStream {
                 quote!(
                     #value_enum
 
-                    #[derive(Debug)]
-                    enum #enum_name {
+                    #[derive(Debug, Copy, Clone)]
+                    pub enum #enum_name {
                         #implicit_variant { mode: crate::cpu::instruction::addressing_mode::#implicit_variant },
                         #value_enum_name { mode: #value_enum_name }
                     }
