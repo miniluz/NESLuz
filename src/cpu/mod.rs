@@ -107,8 +107,6 @@ impl Cpu {
 
 #[derive(Debug, Error)]
 pub enum CpuError {
-    #[error("tried to use accumulator addressing_mode")]
-    ReadAccumulatorAddressingMode,
     #[error(transparent)]
     CpuMemoryError(#[from] memory::CpuMemoryError),
 }
