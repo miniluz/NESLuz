@@ -6,6 +6,7 @@ use super::instruction::addressing_mode::{IntoAddress, IntoValue};
 
 fn assert_into_address<T: IntoAddress>(_: T) {}
 fn assert_into_value<T: IntoValue>(_: T) {}
+fn assert_debug<T: std::fmt::Debug>(_: T) {}
 fn assert_type<T>(_: T) {}
 
 #[test]
@@ -19,6 +20,7 @@ fn accumulator_immediate() {
     let a: Option<BarAddressingMode> = None;
 
     if let Some(a) = a {
+        assert_debug(a);
         match a {
             BarAddressingMode::Accumulator { mode } => {
                 assert_type::<AM::Accumulator>(mode);
@@ -41,6 +43,7 @@ fn accumulator_address() {
 
     let a: Option<BarAddressingMode> = None;
     if let Some(a) = a {
+        assert_debug(a);
         match a {
             BarAddressingMode::Accumulator { mode } => {
                 assert_type::<AM::Accumulator>(mode);
@@ -64,6 +67,7 @@ fn immediate_address() {
 
     let a: Option<BarAddressingMode> = None;
     if let Some(a) = a {
+        assert_debug(a);
         assert_into_value(a);
         match a {
             BarAddressingMode::Immediate { mode } => {
@@ -89,6 +93,7 @@ fn addresses() {
 
     let a: Option<BarAddressingMode> = None;
     if let Some(a) = a {
+        assert_debug(a);
         assert_into_address(a);
         assert_into_value(a);
         match a {
@@ -116,6 +121,7 @@ fn immediate_addresses() {
 
     let a: Option<BarAddressingMode> = None;
     if let Some(a) = a {
+        assert_debug(a);
         assert_into_value(a);
         match a {
             BarAddressingMode::Immediate { mode } => {
@@ -123,6 +129,7 @@ fn immediate_addresses() {
                 assert_into_value(mode);
             }
             BarAddressingMode::BarAddressAddressingMode { mode } => {
+                assert_debug(a);
                 assert_into_value(mode);
                 assert_into_address(mode);
                 match mode {
@@ -152,11 +159,13 @@ fn accumulator_addresses() {
 
     let a: Option<BarAddressingMode> = None;
     if let Some(a) = a {
+        assert_debug(a);
         match a {
             BarAddressingMode::Accumulator { mode } => {
                 assert_type::<AM::Accumulator>(mode);
             }
             BarAddressingMode::BarAddressAddressingMode { mode } => {
+                assert_debug(a);
                 assert_into_value(mode);
                 assert_into_address(mode);
                 match mode {
@@ -191,11 +200,13 @@ fn accumulator_immediate_addresses() {
 
     let a: Option<BazAddressingMode> = None;
     if let Some(a) = a {
+        assert_debug(a);
         match a {
             BazAddressingMode::Accumulator { mode } => {
                 assert_type::<AM::Accumulator>(mode);
             }
             BazAddressingMode::BazValueAddressingMode { mode } => {
+                assert_debug(a);
                 assert_into_value(mode);
                 match mode {
                     BazValueAddressingMode::Immediate { mode } => {
@@ -203,6 +214,7 @@ fn accumulator_immediate_addresses() {
                         assert_into_value(mode);
                     }
                     BazValueAddressingMode::BazAddressAddressingMode { mode } => {
+                        assert_debug(a);
                         assert_into_value(mode);
                         assert_into_address(mode);
                         match mode {
@@ -219,6 +231,52 @@ fn accumulator_immediate_addresses() {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+#[test]
+fn test_multiple() {
+    #[derive(AddressingEnum)]
+    enum Foo {
+        Baz,
+        #[modes(mode = "accumulator", mode = "immediate")]
+        Bam(BamAddressingMode),
+        #[modes(mode = "zero_page_y", mode = "relative")]
+        Bar(BarAddressingMode),
+    }
+
+    let a: Option<BamAddressingMode> = None;
+
+    if let Some(a) = a {
+        assert_debug(a);
+        match a {
+            BamAddressingMode::Accumulator { mode } => {
+                assert_type::<AM::Accumulator>(mode);
+            }
+            BamAddressingMode::Immediate { mode } => {
+                assert_type::<AM::Immediate>(mode);
+                assert_into_value(mode)
+            }
+        }
+    }
+
+    let a: Option<BarAddressingMode> = None;
+    if let Some(a) = a {
+        assert_debug(a);
+        assert_into_address(a);
+        assert_into_value(a);
+        match a {
+            BarAddressingMode::ZeroPageY { mode } => {
+                assert_type::<AM::ZeroPageY>(mode);
+                assert_into_value(mode);
+                assert_into_address(mode);
+            }
+            BarAddressingMode::Relative { mode } => {
+                assert_type::<AM::Relative>(mode);
+                assert_into_value(mode);
+                assert_into_address(mode);
             }
         }
     }
