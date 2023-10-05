@@ -1,5 +1,5 @@
 use super::*;
-use instruction::addressing_mode;
+use instruction::addressing_mode as AM;
 use instruction::opcodes::*;
 
 fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)> {
@@ -15,7 +15,9 @@ fn asl_accumulator() {
         get_instruction(&[ASL_ACCUMULATOR]).unwrap(),
         (
             Instruction::Asl {
-                addressing_mode: AddressingMode::Accumulator,
+                addressing_mode: AslAddressingMode::Accumulator {
+                    mode: AM::Accumulator {}
+                }
             },
             0x8001
         )
@@ -44,7 +46,9 @@ fn adc_immediate() {
         get_instruction(&[ADC_IMMEDIATE, 0xc0]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+                addressing_mode: AdcAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
             },
             0x8002
         )
@@ -83,7 +87,9 @@ fn and_immediate() {
         get_instruction(&[AND_IMMEDIATE, 0xc0]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+                addressing_mode: AndAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
             },
             0x8002
         )
@@ -118,7 +124,9 @@ fn lda_immediate() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+                addressing_mode: LdAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
             },
             0x8002,
         )
@@ -144,7 +152,9 @@ fn ldx_immediate() {
         (
             Instruction::Ld {
                 destination: Register::X,
-                addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+                addressing_mode: LdAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
             },
             0x8002
         )
@@ -170,7 +180,9 @@ fn ldy_immediate() {
         (
             Instruction::Ld {
                 destination: Register::Y,
-                addressing_mode: AddressingMode::Immediate { immediate: 0xc0 }
+                addressing_mode: LdAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
             },
             0x8002
         )
@@ -195,7 +207,11 @@ fn adc_zero_page() {
         get_instruction(&[ADC_ZERO_PAGE, 0xc0]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
             },
             0x8002
         )
@@ -246,7 +262,11 @@ fn and_zero_page() {
         get_instruction(&[AND_ZERO_PAGE, 0xc0]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
             },
             0x8002
         )
@@ -295,7 +315,11 @@ fn asl_zero_page() {
         get_instruction(&[ASL_ZERO_PAGE, 0xab]).unwrap(),
         (
             Instruction::Asl {
-                addressing_mode: AddressingMode::ZeroPage { address: 0xab }
+                addressing_mode: AslAddressingMode::AslAddressAddressingMode {
+                    mode: AslAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xab }
+                    }
+                }
             },
             0x8002
         )
@@ -309,7 +333,7 @@ fn asl_zero_page() {
         .load(0x00, &[0x01, 0x02, 0b10000000, 0x04])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x02).unwrap(), 0b00000000);
+    assert_eq!(cpu.memory.read(0x02), 0b00000000);
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));
     assert!(!cpu.status.get(Flag::Negative));
@@ -322,7 +346,7 @@ fn asl_zero_page() {
         .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x03).unwrap(), 0b1010_1010);
+    assert_eq!(cpu.memory.read(0x03), 0b1010_1010);
     assert!(!cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Negative));
     assert!(!cpu.status.get(Flag::Carry));
@@ -335,7 +359,11 @@ fn lda_zero_page() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
             },
             0x8002,
         )
@@ -365,7 +393,11 @@ fn ldx_zero_page() {
         (
             Instruction::Ld {
                 destination: Register::X,
-                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
             },
             0x8002,
         )
@@ -395,7 +427,11 @@ fn ldy_zero_page() {
         (
             Instruction::Ld {
                 destination: Register::Y,
-                addressing_mode: AddressingMode::ZeroPage { address: 0xc0 }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
             },
             0x8002,
         )
@@ -424,7 +460,11 @@ fn adc_zero_page_x() {
         get_instruction(&[ADC_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::ZeroPageX {
+                        mode: AM::ZeroPageX { address: 0xc0 }
+                    }
+                }
             },
             0x8002
         )
@@ -478,7 +518,11 @@ fn and_zero_page_x() {
         get_instruction(&[AND_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::ZeroPageX {
+                        mode: AM::ZeroPageX { address: 0xc0 }
+                    }
+                }
             },
             0x8002
         )
@@ -530,7 +574,11 @@ fn asl_zero_page_x() {
         get_instruction(&[ASL_ZERO_PAGE_X, 0xab]).unwrap(),
         (
             Instruction::Asl {
-                addressing_mode: AddressingMode::ZeroPageX { address: 0xab }
+                addressing_mode: AslAddressingMode::AslAddressAddressingMode {
+                    mode: AslAddressAddressingMode::ZeroPageX {
+                        mode: AM::ZeroPageX { address: 0xab }
+                    }
+                }
             },
             0x8002
         )
@@ -545,7 +593,7 @@ fn asl_zero_page_x() {
         .load(0x00, &[0x01, 0x02, 0b10000000, 0x04])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x02).unwrap(), 0b00000000);
+    assert_eq!(cpu.memory.read(0x02), 0b00000000);
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));
     assert!(!cpu.status.get(Flag::Negative));
@@ -559,7 +607,7 @@ fn asl_zero_page_x() {
         .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x03).unwrap(), 0b1010_1010);
+    assert_eq!(cpu.memory.read(0x03), 0b1010_1010);
     assert!(!cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Negative));
     assert!(!cpu.status.get(Flag::Carry));
@@ -572,7 +620,11 @@ fn lda_zero_page_x() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::ZeroPageX {
+                        mode: AM::ZeroPageX { address: 0xc0 }
+                    }
+                }
             },
             0x8002,
         )
@@ -604,7 +656,11 @@ fn ldy_zero_page_x() {
         (
             Instruction::Ld {
                 destination: Register::Y,
-                addressing_mode: AddressingMode::ZeroPageX { address: 0xc0 }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::ZeroPageX {
+                        mode: AM::ZeroPageX { address: 0xc0 }
+                    }
+                }
             },
             0x8002,
         )
@@ -636,7 +692,11 @@ fn ldx_zero_page_y() {
         (
             Instruction::Ld {
                 destination: Register::X,
-                addressing_mode: AddressingMode::ZeroPageY { address: 0xc0 }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::ZeroPageY {
+                        mode: AM::ZeroPageY { address: 0xc0 }
+                    }
+                }
             },
             0x8002,
         )
@@ -667,7 +727,7 @@ fn bcc() {
         get_instruction(&[BCC, 0x0b]).unwrap(),
         (
             Instruction::Bcc {
-                addressing_mode: AddressingMode::Relative { offset: 0x0b }
+                addressing_mode: AM::Relative { offset: 0x0b }
             },
             0x8002
         )
@@ -704,9 +764,13 @@ fn adc_absolute() {
         get_instruction(&[ADC_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab },
+                    },
+                },
             },
-            0x8003
+            0x8003,
         )
     ));
 
@@ -755,7 +819,11 @@ fn and_absolute() {
         get_instruction(&[AND_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -804,7 +872,11 @@ fn asl_absolute() {
         get_instruction(&[ASL_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Asl {
-                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                addressing_mode: AslAddressingMode::AslAddressAddressingMode {
+                    mode: AslAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -818,7 +890,7 @@ fn asl_absolute() {
         .load(0x0100, &[0x01, 0x02, 0b10000000, 0x04])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x0102).unwrap(), 0b00000000);
+    assert_eq!(cpu.memory.read(0x0102), 0b00000000);
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));
     assert!(!cpu.status.get(Flag::Negative));
@@ -831,7 +903,7 @@ fn asl_absolute() {
         .load(0x0100, &[0x01, 0x02, 0x03, 0b0101_0101])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x0103).unwrap(), 0b1010_1010);
+    assert_eq!(cpu.memory.read(0x0103), 0b1010_1010);
     assert!(!cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Negative));
     assert!(!cpu.status.get(Flag::Carry));
@@ -844,7 +916,11 @@ fn lda_absolute() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab },
+                    },
+                },
             },
             0x8003,
         )
@@ -875,7 +951,11 @@ fn ldx_absolute() {
         (
             Instruction::Ld {
                 destination: Register::X,
-                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab },
+                    },
+                },
             },
             0x8003,
         )
@@ -906,7 +986,11 @@ fn ldy_absolute() {
         (
             Instruction::Ld {
                 destination: Register::Y,
-                addressing_mode: AddressingMode::Absolute { address: 0xcdab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab },
+                    },
+                },
             },
             0x8003,
         )
@@ -936,7 +1020,11 @@ fn adc_absolute_x() {
         get_instruction(&[ADC_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::AbsoluteX {
+                        mode: AM::AbsoluteX { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -990,7 +1078,11 @@ fn and_absolute_x() {
         get_instruction(&[AND_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::AbsoluteX {
+                        mode: AM::AbsoluteX { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -1042,7 +1134,11 @@ fn asl_absolute_x() {
         get_instruction(&[ASL_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Asl {
-                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+                addressing_mode: AslAddressingMode::AslAddressAddressingMode {
+                    mode: AslAddressAddressingMode::AbsoluteX {
+                        mode: AM::AbsoluteX { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -1057,7 +1153,7 @@ fn asl_absolute_x() {
         .load(0x0100, &[0x01, 0x02, 0b10000000, 0x04])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x0102).unwrap(), 0b00000000);
+    assert_eq!(cpu.memory.read(0x0102), 0b00000000);
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));
     assert!(!cpu.status.get(Flag::Negative));
@@ -1071,7 +1167,7 @@ fn asl_absolute_x() {
         .load(0x0100, &[0x01, 0x02, 0x03, 0b0101_0101])
         .unwrap();
     cpu.run().unwrap();
-    assert_eq!(cpu.memory.read(0x0103).unwrap(), 0b1010_1010);
+    assert_eq!(cpu.memory.read(0x0103), 0b1010_1010);
     assert!(!cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Negative));
     assert!(!cpu.status.get(Flag::Carry));
@@ -1084,7 +1180,11 @@ fn lda_absolute_x() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::AbsoluteX {
+                        mode: AM::AbsoluteX { address: 0xcdab },
+                    },
+                },
             },
             0x8003,
         )
@@ -1110,12 +1210,52 @@ fn lda_absolute_x() {
 }
 
 #[test]
+fn ldy_absolute_x() {
+    assert!(matches!(
+        get_instruction(&[LDY_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Ld {
+                destination: Register::Y,
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::AbsoluteX {
+                        mode: AM::AbsoluteX { address: 0xcdab },
+                    },
+                },
+            },
+            0x8003,
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[LDY_ABSOLUTE_X, 0x02, 0x01, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 0x01;
+    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf4]).unwrap();
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 0xf4);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(&[LDY_ABSOLUTE_X, 0x00, 0x02, 0x00])
+        .unwrap();
+    assert_eq!(cpu.register_y, 0x00);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+}
+
+#[test]
 fn adc_absolute_y() {
     assert!(matches!(
         get_instruction(&[ADC_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::AbsoluteY {
+                        mode: AM::AbsoluteY { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -1169,7 +1309,11 @@ fn and_absolute_y() {
         get_instruction(&[AND_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::AbsoluteY {
+                        mode: AM::AbsoluteY { address: 0xcdab },
+                    },
+                },
             },
             0x8003
         )
@@ -1216,45 +1360,17 @@ fn and_absolute_y() {
 }
 
 #[test]
-fn ldy_absolute_x() {
-    assert!(matches!(
-        get_instruction(&[LDY_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
-        (
-            Instruction::Ld {
-                destination: Register::Y,
-                addressing_mode: AddressingMode::AbsoluteX { address: 0xcdab }
-            },
-            0x8003,
-        )
-    ));
-
-    let mut cpu = Cpu::new();
-    cpu.load(&[LDY_ABSOLUTE_X, 0x02, 0x01, 0x00]).unwrap();
-    cpu.reset().unwrap();
-    cpu.program_counter = 0x8000;
-    cpu.register_x = 0x01;
-    cpu.memory.load(0x0100, &[0x01, 0x02, 0x03, 0xf4]).unwrap();
-    cpu.run().unwrap();
-    assert_eq!(cpu.register_y, 0xf4);
-    assert!(cpu.status.get(Flag::Negative));
-    assert!(!cpu.status.get(Flag::Zero));
-
-    let mut cpu = Cpu::new();
-    cpu.load_and_run_test(&[LDY_ABSOLUTE_X, 0x00, 0x02, 0x00])
-        .unwrap();
-    assert_eq!(cpu.register_y, 0x00);
-    assert!(!cpu.status.get(Flag::Negative));
-    assert!(cpu.status.get(Flag::Zero));
-}
-
-#[test]
 fn lda_absolute_y() {
     assert!(matches!(
         get_instruction(&[LDA_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::AbsoluteY {
+                        mode: AM::AbsoluteY { address: 0xcdab },
+                    },
+                },
             },
             0x8003,
         )
@@ -1286,7 +1402,11 @@ fn ldx_absolute_y() {
         (
             Instruction::Ld {
                 destination: Register::X,
-                addressing_mode: AddressingMode::AbsoluteY { address: 0xcdab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::AbsoluteY {
+                        mode: AM::AbsoluteY { address: 0xcdab },
+                    },
+                },
             },
             0x8003,
         )
@@ -1317,7 +1437,11 @@ fn adc_indirect_x() {
         get_instruction(&[ADC_INDIRECT_X, 0xab]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::IndirectX { address: 0xab }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::IndirectX {
+                        mode: AM::IndirectX { address: 0xab },
+                    },
+                },
             },
             0x8002
         )
@@ -1374,7 +1498,11 @@ fn and_indirect_x() {
         get_instruction(&[AND_INDIRECT_X, 0xab]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::IndirectX { address: 0xab }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::IndirectX {
+                        mode: AM::IndirectX { address: 0xab },
+                    },
+                },
             },
             0x8002
         )
@@ -1426,7 +1554,11 @@ fn lda_indirect_x() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::IndirectX { address: 0xab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::IndirectX {
+                        mode: AM::IndirectX { address: 0xab },
+                    },
+                },
             },
             0x8002,
         )
@@ -1458,7 +1590,11 @@ fn adc_indirect_y() {
         get_instruction(&[ADC_INDIRECT_Y, 0xab]).unwrap(),
         (
             Instruction::Adc {
-                addressing_mode: AddressingMode::IndirectY { address: 0xab }
+                addressing_mode: AdcAddressingMode::AdcAddressAddressingMode {
+                    mode: AdcAddressAddressingMode::IndirectY {
+                        mode: AM::IndirectY { address: 0xab },
+                    },
+                },
             },
             0x8002
         )
@@ -1515,7 +1651,11 @@ fn and_indirect_y() {
         get_instruction(&[AND_INDIRECT_Y, 0xab]).unwrap(),
         (
             Instruction::And {
-                addressing_mode: AddressingMode::IndirectY { address: 0xab }
+                addressing_mode: AndAddressingMode::AndAddressAddressingMode {
+                    mode: AndAddressAddressingMode::IndirectY {
+                        mode: AM::IndirectY { address: 0xab },
+                    },
+                },
             },
             0x8002
         )
@@ -1567,7 +1707,11 @@ fn lda_indirect_y() {
         (
             Instruction::Ld {
                 destination: Register::A,
-                addressing_mode: AddressingMode::IndirectY { address: 0xab }
+                addressing_mode: LdAddressingMode::LdAddressAddressingMode {
+                    mode: LdAddressAddressingMode::IndirectY {
+                        mode: AM::IndirectY { address: 0xab },
+                    },
+                },
             },
             0x8002,
         )
