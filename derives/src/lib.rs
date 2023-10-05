@@ -2,28 +2,7 @@ use std::collections::HashSet;
 
 use darling::FromDeriveInput;
 use proc_macro::{self, TokenStream};
-use proc_macro2::Ident;
-use quote::{format_ident, quote};
 use syn::{parse_macro_input, DeriveInput};
-
-#[proc_macro_derive(TryIntoValue)]
-pub fn derive_try_into_value(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let ident = input.ident;
-
-    let output = quote! {
-        #[automatically_derived]
-        impl crate::cpu::instruction::addressing_mode::TryIntoValue for #ident {
-            fn try_into_value(&self, cpu: &Cpu) -> Result<u8, CpuError> {
-                let address = self.try_into_address(cpu)?;
-                let result = cpu.memory.read(address)?;
-                Ok(result)
-            }
-        }
-    };
-
-    output.into()
-}
 
 #[proc_macro_derive(AddressingEnum, attributes(modes))]
 pub fn derive_addressing_enums(input: TokenStream) -> TokenStream {
