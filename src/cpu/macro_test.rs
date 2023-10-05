@@ -12,7 +12,7 @@ fn assert_type<T>(_: T) {}
 #[test]
 fn accumulator_immediate() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(mode = "accumulator", mode = "immediate")]
         Bar(BarAddressingMode),
     }
@@ -36,7 +36,7 @@ fn accumulator_immediate() {
 #[test]
 fn accumulator_address() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(mode = "accumulator", mode = "zero_page")]
         Bar(BarAddressingMode),
     }
@@ -60,7 +60,7 @@ fn accumulator_address() {
 #[test]
 fn immediate_address() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(mode = "immediate", mode = "zero_page_x")]
         Bar(BarAddressingMode),
     }
@@ -86,7 +86,7 @@ fn immediate_address() {
 #[test]
 fn addresses() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(mode = "zero_page_y", mode = "relative")]
         Bar(BarAddressingMode),
     }
@@ -114,7 +114,7 @@ fn addresses() {
 #[test]
 fn immediate_addresses() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(mode = "immediate", mode = "absolute", mode = "absolute_x")]
         Bar(BarAddressingMode),
     }
@@ -152,7 +152,7 @@ fn immediate_addresses() {
 #[test]
 fn accumulator_addresses() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(mode = "accumulator", mode = "absolute_y", mode = "indirect")]
         Bar(BarAddressingMode),
     }
@@ -188,7 +188,7 @@ fn accumulator_addresses() {
 #[test]
 fn accumulator_immediate_addresses() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         #[modes(
             mode = "accumulator",
             mode = "immediate",
@@ -239,7 +239,7 @@ fn accumulator_immediate_addresses() {
 #[test]
 fn test_multiple() {
     #[derive(AddressingEnum)]
-    enum Foo {
+    enum _Foo {
         Baz,
         #[modes(mode = "accumulator", mode = "immediate")]
         Bam(BamAddressingMode),

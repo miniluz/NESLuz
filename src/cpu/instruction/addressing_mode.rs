@@ -1,7 +1,4 @@
-use crate::cpu::{
-    memory::{CpuMemoryError, Memory},
-    Cpu,
-};
+use crate::cpu::{memory::Memory, Cpu};
 
 pub struct Address {
     address: u16,

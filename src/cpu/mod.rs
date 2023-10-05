@@ -12,7 +12,7 @@ use instruction::*;
 use thiserror::Error;
 
 use crate::cpu::{
-    instruction::addressing_mode::{Accumulator, IntoAddress, IntoValue},
+    instruction::addressing_mode::{IntoAddress, IntoValue},
     status::Flag,
 };
 
