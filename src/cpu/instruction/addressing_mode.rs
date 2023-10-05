@@ -35,10 +35,10 @@ pub struct Immediate {
 }
 
 impl Immediate {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<Immediate, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Immediate {
         let immediate = memory.read(*program_counter);
         *program_counter += 1;
-        Ok(Immediate { immediate })
+        Immediate { immediate }
     }
 }
 
@@ -54,10 +54,10 @@ pub struct ZeroPage {
 }
 
 impl ZeroPage {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<ZeroPage, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> ZeroPage {
         let address = memory.read(*program_counter);
         *program_counter += 1;
-        Ok(ZeroPage { address })
+        ZeroPage { address }
     }
 }
 
@@ -67,10 +67,10 @@ pub struct ZeroPageX {
 }
 
 impl ZeroPageX {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<ZeroPageX, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> ZeroPageX {
         let address: u8 = memory.read(*program_counter);
         *program_counter += 1;
-        Ok(ZeroPageX { address })
+        ZeroPageX { address }
     }
 }
 
@@ -80,10 +80,10 @@ pub struct ZeroPageY {
 }
 
 impl ZeroPageY {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<ZeroPageY, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> ZeroPageY {
         let address: u8 = memory.read(*program_counter);
         *program_counter += 1;
-        Ok(ZeroPageY { address })
+        ZeroPageY { address }
     }
 }
 
@@ -93,10 +93,10 @@ pub struct Relative {
 }
 
 impl Relative {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<Relative, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Relative {
         let offset = memory.read(*program_counter) as i8;
         *program_counter += 1;
-        Ok(Relative { offset })
+        Relative { offset }
     }
 }
 
@@ -106,10 +106,10 @@ pub struct Absolute {
 }
 
 impl Absolute {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<Absolute, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Absolute {
         let address = memory.read_u16(*program_counter);
         *program_counter += 2;
-        Ok(Absolute { address })
+        Absolute { address }
     }
 }
 
@@ -119,10 +119,10 @@ pub struct AbsoluteX {
 }
 
 impl AbsoluteX {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<AbsoluteX, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> AbsoluteX {
         let address = memory.read_u16(*program_counter);
         *program_counter += 2;
-        Ok(AbsoluteX { address })
+        AbsoluteX { address }
     }
 }
 
@@ -132,10 +132,23 @@ pub struct AbsoluteY {
 }
 
 impl AbsoluteY {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<AbsoluteY, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> AbsoluteY {
         let address = memory.read_u16(*program_counter);
         *program_counter += 2;
-        Ok(AbsoluteY { address })
+        AbsoluteY { address }
+    }
+}
+
+#[derive(Debug)]
+pub struct Indirect {
+    pub address: u8,
+}
+
+impl Indirect {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> Indirect {
+        let address = memory.read(*program_counter);
+        *program_counter += 1;
+        Indirect { address }
     }
 }
 
@@ -145,10 +158,10 @@ pub struct IndirectX {
 }
 
 impl IndirectX {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<IndirectX, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> IndirectX {
         let address = memory.read(*program_counter);
         *program_counter += 1;
-        Ok(IndirectX { address })
+        IndirectX { address }
     }
 }
 
@@ -158,10 +171,10 @@ pub struct IndirectY {
 }
 
 impl IndirectY {
-    pub fn new(memory: &Memory, program_counter: &mut u16) -> Result<IndirectY, CpuMemoryError> {
+    pub fn new(memory: &Memory, program_counter: &mut u16) -> IndirectY {
         let address = memory.read(*program_counter);
         *program_counter += 1;
-        Ok(IndirectY { address })
+        IndirectY { address }
     }
 }
 
@@ -207,6 +220,16 @@ impl IntoAddress for AbsoluteX {
 impl IntoAddress for AbsoluteY {
     fn into_address(&self, cpu: &Cpu) -> u16 {
         let address = self.address.wrapping_add(cpu.register_y as u16);
+        address
+    }
+}
+
+impl IntoAddress for Indirect {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let base = self.address;
+        let lo = cpu.memory.read(base as u16);
+        let hi = cpu.memory.read(base.wrapping_add(1) as u16);
+        let address = (hi as u16) << 8 | lo as u16;
         address
     }
 }

@@ -5,12 +5,15 @@ pub mod status;
 #[cfg(test)]
 mod instruction_test;
 
+#[cfg(test)]
+mod macro_test;
+
 use instruction::*;
 use thiserror::Error;
 
 use crate::cpu::status::Flag;
 
-use self::{instruction::addressing_mode::TryIntoAddress, memory::Memory, status::Status};
+use self::{memory::Memory, status::Status};
 
 #[derive(Debug)]
 pub struct Cpu {
