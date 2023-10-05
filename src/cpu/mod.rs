@@ -11,7 +11,10 @@ mod macro_test;
 use instruction::*;
 use thiserror::Error;
 
-use crate::cpu::status::Flag;
+use crate::cpu::{
+    instruction::addressing_mode::{Accumulator, IntoAddress, IntoValue},
+    status::Flag,
+};
 
 use self::{memory::Memory, status::Status};
 
@@ -76,7 +79,7 @@ impl Cpu {
         self.stack_pointer = 0xff;
         self.status = Status::new();
 
-        self.program_counter = self.memory.read_u16(0xFFFC)?;
+        self.program_counter = self.memory.read_u16(0xFFFC);
         Ok(())
     }
 
@@ -125,7 +128,7 @@ impl Cpu {
             match instruction {
                 Break => break,
                 Adc { addressing_mode } => {
-                    let value = self.read_address(&addressing_mode)?;
+                    let value = addressing_mode.into_value(self);
                     let carry = self.status.get(Flag::Carry) as u8;
 
                     let carry_flag = {
@@ -148,37 +151,42 @@ impl Cpu {
                     self.set_zero_and_negative(value);
                 }
                 And { addressing_mode } => {
-                    let value = self.read_address(&addressing_mode)?;
+                    let value = addressing_mode.into_value(self);
                     let value = self.register_a & value;
                     self.register_a = value;
                     self.set_zero_and_negative(value);
                 }
                 Asl { addressing_mode } => {
-                    let value = if let AddressingMode::Accumulator = addressing_mode {
-                        self.register_a
-                    } else {
-                        self.read_address(&addressing_mode)?
+                    let value = match addressing_mode {
+                        AslAddressingMode::Accumulator { mode: _ } => self.register_a,
+                        AslAddressingMode::AslAddressAddressingMode { mode } => {
+                            mode.into_value(self)
+                        }
                     };
 
                     self.status.set(Flag::Carry, (value as i8) < 0);
                     let value = value.wrapping_shl(1);
                     self.set_zero_and_negative(value);
 
-                    if let AddressingMode::Accumulator = addressing_mode {
-                        self.register_a = value;
-                    } else {
-                        self.write_address(&addressing_mode, value)?;
-                    }
+                    match addressing_mode {
+                        AslAddressingMode::Accumulator { mode: _ } => {
+                            self.register_a = value;
+                        }
+                        AslAddressingMode::AslAddressAddressingMode { mode } => {
+                            let address = mode.into_address(self);
+                            self.memory.write(address, value);
+                        }
+                    };
                 }
                 Bcc { addressing_mode } => {
-                    let new_address = self.handle_addressing_mode(&addressing_mode)?;
+                    let new_address = addressing_mode.into_address(self);
                     self.program_counter = new_address;
                 }
                 Ld {
                     destination,
                     addressing_mode,
                 } => {
-                    let value = self.read_address(&addressing_mode)?;
+                    let value = addressing_mode.into_value(self);
                     self.set_register(&destination, value);
                     self.set_zero_and_negative(value);
                 }
