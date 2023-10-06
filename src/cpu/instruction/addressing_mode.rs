@@ -54,6 +54,12 @@ impl ZeroPage {
     }
 }
 
+impl IntoAddress for ZeroPage {
+    fn into_address(&self, _cpu: &Cpu) -> u16 {
+        self.address as u16
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct ZeroPageX {
     pub address: u8,
@@ -64,6 +70,13 @@ impl ZeroPageX {
         let address: u8 = memory.read(*program_counter);
         *program_counter += 1;
         ZeroPageX { address }
+    }
+}
+
+impl IntoAddress for ZeroPageX {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let address = self.address.wrapping_add(cpu.register_x);
+        address as u16
     }
 }
 
@@ -80,6 +93,13 @@ impl ZeroPageY {
     }
 }
 
+impl IntoAddress for ZeroPageY {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let address = self.address.wrapping_add(cpu.register_y);
+        address as u16
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Relative {
     pub offset: i8,
@@ -90,6 +110,12 @@ impl Relative {
         let offset = memory.read(*program_counter) as i8;
         *program_counter += 1;
         Relative { offset }
+    }
+}
+
+impl IntoAddress for Relative {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        cpu.program_counter.wrapping_add(self.offset as u16)
     }
 }
 
@@ -106,6 +132,12 @@ impl Absolute {
     }
 }
 
+impl IntoAddress for Absolute {
+    fn into_address(&self, _cpu: &Cpu) -> u16 {
+        self.address
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct AbsoluteX {
     pub address: u16,
@@ -116,6 +148,13 @@ impl AbsoluteX {
         let address = memory.read_u16(*program_counter);
         *program_counter += 2;
         AbsoluteX { address }
+    }
+}
+
+impl IntoAddress for AbsoluteX {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let address = self.address.wrapping_add(cpu.register_x as u16);
+        address
     }
 }
 
@@ -132,6 +171,13 @@ impl AbsoluteY {
     }
 }
 
+impl IntoAddress for AbsoluteY {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let address = self.address.wrapping_add(cpu.register_y as u16);
+        address
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Indirect {
     pub address: u8,
@@ -142,6 +188,16 @@ impl Indirect {
         let address = memory.read(*program_counter);
         *program_counter += 1;
         Indirect { address }
+    }
+}
+
+impl IntoAddress for Indirect {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let base = self.address;
+        let lo = cpu.memory.read(base as u16);
+        let hi = cpu.memory.read(base.wrapping_add(1) as u16);
+        let address = (hi as u16) << 8 | lo as u16;
+        address
     }
 }
 
@@ -158,6 +214,16 @@ impl IndirectX {
     }
 }
 
+impl IntoAddress for IndirectX {
+    fn into_address(&self, cpu: &Cpu) -> u16 {
+        let base = self.address.wrapping_add(cpu.register_x);
+        let lo = cpu.memory.read(base as u16);
+        let hi = cpu.memory.read(base.wrapping_add(1) as u16);
+        let address = (hi as u16) << 8 | lo as u16;
+        address
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct IndirectY {
     pub address: u8,
@@ -168,72 +234,6 @@ impl IndirectY {
         let address = memory.read(*program_counter);
         *program_counter += 1;
         IndirectY { address }
-    }
-}
-
-impl IntoAddress for ZeroPage {
-    fn into_address(&self, _cpu: &Cpu) -> u16 {
-        self.address as u16
-    }
-}
-
-impl IntoAddress for ZeroPageX {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        let address = self.address.wrapping_add(cpu.register_x);
-        address as u16
-    }
-}
-
-impl IntoAddress for ZeroPageY {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        let address = self.address.wrapping_add(cpu.register_y);
-        address as u16
-    }
-}
-
-impl IntoAddress for Relative {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        cpu.program_counter.wrapping_add(self.offset as u16)
-    }
-}
-
-impl IntoAddress for Absolute {
-    fn into_address(&self, _cpu: &Cpu) -> u16 {
-        self.address
-    }
-}
-
-impl IntoAddress for AbsoluteX {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        let address = self.address.wrapping_add(cpu.register_x as u16);
-        address
-    }
-}
-
-impl IntoAddress for AbsoluteY {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        let address = self.address.wrapping_add(cpu.register_y as u16);
-        address
-    }
-}
-
-impl IntoAddress for Indirect {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        let base = self.address;
-        let lo = cpu.memory.read(base as u16);
-        let hi = cpu.memory.read(base.wrapping_add(1) as u16);
-        let address = (hi as u16) << 8 | lo as u16;
-        address
-    }
-}
-
-impl IntoAddress for IndirectX {
-    fn into_address(&self, cpu: &Cpu) -> u16 {
-        let base = self.address.wrapping_add(cpu.register_x);
-        let lo = cpu.memory.read(base as u16);
-        let hi = cpu.memory.read(base.wrapping_add(1) as u16);
-        let address = (hi as u16) << 8 | lo as u16;
-        address
     }
 }
 
