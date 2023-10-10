@@ -48,6 +48,8 @@ pub const BRK: u8 = 0x00;
 
 // Branch if Overflow Clear
 pub const BVC: u8 = 0x50;
+// Branch if Overflow Set
+pub const BVS: u8 = 0x70;
 
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;

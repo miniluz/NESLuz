@@ -280,7 +280,7 @@ impl Instruction {
             BEQ => Instruction::Branch {
                 addressing_mode: AM::Relative::new(memory, &mut program_counter),
                 flag: Flag::Zero,
-                branch_if: false,
+                branch_if: true,
             },
             BIT_ZERO_PAGE => {
                 let addressing_mode = BitAddressingMode::ZeroPage {
@@ -314,6 +314,11 @@ impl Instruction {
                 addressing_mode: AM::Relative::new(memory, &mut program_counter),
                 flag: Flag::Overflow,
                 branch_if: false,
+            },
+            BVS => Instruction::Branch {
+                addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Overflow,
+                branch_if: true,
             },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
