@@ -269,6 +269,11 @@ impl Instruction {
                 flag: Flag::Carry,
                 branch_if: false,
             },
+            BCS => Instruction::Branch {
+                addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Carry,
+                branch_if: true,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

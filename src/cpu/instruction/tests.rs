@@ -740,8 +740,8 @@ fn bcc() {
     let mut cpu = Cpu::new();
     cpu.load_and_run(&[BCC, 0x00, 0x00]).unwrap();
     cpu.reset().unwrap();
-    cpu.status.set(Flag::Carry, false);
     cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, false);
     cpu.run().unwrap();
     assert_eq!(cpu.program_counter, 0x8003);
 
@@ -763,9 +763,59 @@ fn bcc() {
 
     let mut cpu = Cpu::new();
     cpu.load_and_run(&[BCC, 0xf8, 0x00]).unwrap();
-    cpu.status.set(Flag::Carry, false);
     cpu.reset().unwrap();
     cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, false);
+    cpu.run().unwrap();
+    assert_eq!(
+        cpu.program_counter,
+        0x8003u16.wrapping_add(0xf8u8 as i8 as u16)
+    );
+}
+
+#[test]
+fn bcs() {
+    assert!(matches!(
+        get_instruction(&[BCS, 0x0b]).unwrap(),
+        (
+            Instruction::Branch {
+                addressing_mode: AM::Relative { offset: 0x0b },
+                flag: Flag::Carry,
+                branch_if: true,
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCS, 0x00, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, true);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCS, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, true);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x800b);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCS, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, false);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BCS, 0xf8, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, true);
     cpu.run().unwrap();
     assert_eq!(
         cpu.program_counter,

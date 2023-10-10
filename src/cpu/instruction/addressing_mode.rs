@@ -115,7 +115,7 @@ impl Relative {
 
 impl IntoAddress for Relative {
     fn into_address(&self, cpu: &Cpu) -> u16 {
-        cpu.program_counter.wrapping_add(self.offset as u16)
+        cpu.program_counter.wrapping_add(self.offset as i8 as u16)
     }
 }
 
