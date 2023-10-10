@@ -8,7 +8,6 @@ use derives::AddressingEnum;
 use thiserror::Error;
 
 pub mod opcodes;
-use opcodes::*;
 
 #[cfg(test)]
 mod tests;
@@ -98,6 +97,7 @@ impl Instruction {
         memory: &Memory,
         program_counter: &u16,
     ) -> Result<(Instruction, u16), InstructionError> {
+        use opcodes::*;
         let mut program_counter = *program_counter;
         let instruction = memory.read(program_counter);
         program_counter += 1;
@@ -273,6 +273,11 @@ impl Instruction {
                 addressing_mode: AM::Relative::new(memory, &mut program_counter),
                 flag: Flag::Carry,
                 branch_if: true,
+            },
+            BEQ => Instruction::Branch {
+                addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Zero,
+                branch_if: false,
             },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {

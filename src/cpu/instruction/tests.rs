@@ -1,5 +1,4 @@
 use super::addressing_mode as AM;
-use super::opcodes::*;
 use super::*;
 use crate::cpu::status::Flag;
 use crate::cpu::Cpu;
@@ -13,6 +12,8 @@ fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)
 
 #[test]
 fn asl_accumulator() {
+    use super::opcodes::{ASL_ACCUMULATOR, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ASL_ACCUMULATOR]).unwrap(),
         (
@@ -44,6 +45,7 @@ fn asl_accumulator() {
 
 #[test]
 fn adc_immediate() {
+    use super::opcodes::{ADC_IMMEDIATE, LDA_IMMEDIATE};
     assert!(matches!(
         get_instruction(&[ADC_IMMEDIATE, 0xc0]).unwrap(),
         (
@@ -85,6 +87,8 @@ fn adc_immediate() {
 
 #[test]
 fn and_immediate() {
+    use super::opcodes::{AND_IMMEDIATE, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_IMMEDIATE, 0xc0]).unwrap(),
         (
@@ -121,6 +125,8 @@ fn and_immediate() {
 
 #[test]
 fn lda_immediate() {
+    use super::opcodes::LDA_IMMEDIATE;
+
     assert!(matches!(
         get_instruction(&[LDA_IMMEDIATE, 0xc0]).unwrap(),
         (
@@ -149,6 +155,8 @@ fn lda_immediate() {
 
 #[test]
 fn ldx_immediate() {
+    use super::opcodes::LDX_IMMEDIATE;
+
     assert!(matches!(
         get_instruction(&[LDX_IMMEDIATE, 0xc0]).unwrap(),
         (
@@ -177,6 +185,8 @@ fn ldx_immediate() {
 
 #[test]
 fn ldy_immediate() {
+    use super::opcodes::LDY_IMMEDIATE;
+
     assert!(matches!(
         get_instruction(&[LDY_IMMEDIATE, 0xc0]).unwrap(),
         (
@@ -205,6 +215,9 @@ fn ldy_immediate() {
 
 #[test]
 fn adc_zero_page() {
+    use super::opcodes::ADC_ZERO_PAGE;
+    use super::opcodes::LDA_IMMEDIATE;
+
     assert!(matches!(
         get_instruction(&[ADC_ZERO_PAGE, 0xc0]).unwrap(),
         (
@@ -260,6 +273,8 @@ fn adc_zero_page() {
 
 #[test]
 fn and_zero_page() {
+    use super::opcodes::{AND_ZERO_PAGE, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_ZERO_PAGE, 0xc0]).unwrap(),
         (
@@ -313,6 +328,8 @@ fn and_zero_page() {
 
 #[test]
 fn asl_zero_page() {
+    use super::opcodes::ASL_ZERO_PAGE;
+
     assert!(matches!(
         get_instruction(&[ASL_ZERO_PAGE, 0xab]).unwrap(),
         (
@@ -356,6 +373,8 @@ fn asl_zero_page() {
 
 #[test]
 fn lda_zero_page() {
+    use super::opcodes::LDA_ZERO_PAGE;
+
     assert!(matches!(
         get_instruction(&[LDA_ZERO_PAGE, 0xc0]).unwrap(),
         (
@@ -390,6 +409,8 @@ fn lda_zero_page() {
 
 #[test]
 fn ldx_zero_page() {
+    use super::opcodes::LDX_ZERO_PAGE;
+
     assert!(matches!(
         get_instruction(&[LDX_ZERO_PAGE, 0xc0]).unwrap(),
         (
@@ -424,6 +445,8 @@ fn ldx_zero_page() {
 
 #[test]
 fn ldy_zero_page() {
+    use super::opcodes::LDY_ZERO_PAGE;
+
     assert!(matches!(
         get_instruction(&[LDY_ZERO_PAGE, 0xc0]).unwrap(),
         (
@@ -458,6 +481,8 @@ fn ldy_zero_page() {
 
 #[test]
 fn adc_zero_page_x() {
+    use super::opcodes::{ADC_ZERO_PAGE_X, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ADC_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
@@ -516,6 +541,8 @@ fn adc_zero_page_x() {
 
 #[test]
 fn and_zero_page_x() {
+    use super::opcodes::{AND_ZERO_PAGE_X, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
@@ -572,6 +599,8 @@ fn and_zero_page_x() {
 
 #[test]
 fn asl_zero_page_x() {
+    use super::opcodes::ASL_ZERO_PAGE_X;
+
     assert!(matches!(
         get_instruction(&[ASL_ZERO_PAGE_X, 0xab]).unwrap(),
         (
@@ -601,7 +630,7 @@ fn asl_zero_page_x() {
     assert!(!cpu.status.get(Flag::Negative));
 
     let mut cpu = Cpu::new();
-    cpu.load(&[ASL_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.load(&[ASL_ZERO_PAGE_X, 0x03, 0x00]).unwrap();
     cpu.reset().unwrap();
     cpu.register_x = 0x00;
     cpu.program_counter = 0x8000;
@@ -617,6 +646,8 @@ fn asl_zero_page_x() {
 
 #[test]
 fn lda_zero_page_x() {
+    use super::opcodes::LDA_ZERO_PAGE_X;
+
     assert!(matches!(
         get_instruction(&[LDA_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
@@ -653,6 +684,8 @@ fn lda_zero_page_x() {
 
 #[test]
 fn ldy_zero_page_x() {
+    use super::opcodes::LDY_ZERO_PAGE_X;
+
     assert!(matches!(
         get_instruction(&[LDY_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
@@ -689,6 +722,8 @@ fn ldy_zero_page_x() {
 
 #[test]
 fn ldx_zero_page_y() {
+    use super::opcodes::LDX_ZERO_PAGE_Y;
+
     assert!(matches!(
         get_instruction(&[LDX_ZERO_PAGE_Y, 0xc0]).unwrap(),
         (
@@ -725,6 +760,8 @@ fn ldx_zero_page_y() {
 
 #[test]
 fn bcc() {
+    use super::opcodes::BCC;
+
     assert!(matches!(
         get_instruction(&[BCC, 0x0b]).unwrap(),
         (
@@ -775,6 +812,8 @@ fn bcc() {
 
 #[test]
 fn bcs() {
+    use super::opcodes::BCS;
+
     assert!(matches!(
         get_instruction(&[BCS, 0x0b]).unwrap(),
         (
@@ -824,7 +863,61 @@ fn bcs() {
 }
 
 #[test]
+fn beq() {
+    use super::opcodes::BEQ;
+
+    assert!(matches!(
+        get_instruction(&[BEQ, 0x0b]).unwrap(),
+        (
+            Instruction::Branch {
+                addressing_mode: AM::Relative { offset: 0x0b },
+                flag: Flag::Zero,
+                branch_if: false,
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BEQ, 0x00, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Zero, false);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BEQ, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Zero, false);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x800b);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BEQ, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Zero, true);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BEQ, 0xf8, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Zero, false);
+    cpu.run().unwrap();
+    assert_eq!(
+        cpu.program_counter,
+        0x8003u16.wrapping_add(0xf8u8 as i8 as u16)
+    );
+}
+
+#[test]
 fn adc_absolute() {
+    use super::opcodes::{ADC_ABSOLUTE, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ADC_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
@@ -880,6 +973,8 @@ fn adc_absolute() {
 
 #[test]
 fn and_absolute() {
+    use super::opcodes::{AND_ABSOLUTE, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
@@ -933,6 +1028,8 @@ fn and_absolute() {
 
 #[test]
 fn asl_absolute() {
+    use super::opcodes::ASL_ABSOLUTE;
+
     assert!(matches!(
         get_instruction(&[ASL_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
@@ -976,6 +1073,8 @@ fn asl_absolute() {
 
 #[test]
 fn lda_absolute() {
+    use super::opcodes::LDA_ABSOLUTE;
+
     assert!(matches!(
         get_instruction(&[LDA_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
@@ -1011,6 +1110,8 @@ fn lda_absolute() {
 
 #[test]
 fn ldx_absolute() {
+    use super::opcodes::LDX_ABSOLUTE;
+
     assert!(matches!(
         get_instruction(&[LDX_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
@@ -1046,6 +1147,8 @@ fn ldx_absolute() {
 
 #[test]
 fn ldy_absolute() {
+    use super::opcodes::LDY_ABSOLUTE;
+
     assert!(matches!(
         get_instruction(&[LDY_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
@@ -1072,7 +1175,7 @@ fn ldy_absolute() {
     assert!(!cpu.status.get(Flag::Zero));
 
     let mut cpu = Cpu::new();
-    cpu.load_and_run_test(&[LDA_ABSOLUTE, 0x00, 0x02, 0x00])
+    cpu.load_and_run_test(&[LDY_ABSOLUTE, 0x00, 0x02, 0x00])
         .unwrap();
     assert_eq!(cpu.register_y, 0x00);
     assert!(!cpu.status.get(Flag::Negative));
@@ -1081,6 +1184,8 @@ fn ldy_absolute() {
 
 #[test]
 fn adc_absolute_x() {
+    use super::opcodes::{ADC_ABSOLUTE_X, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ADC_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
@@ -1139,6 +1244,8 @@ fn adc_absolute_x() {
 
 #[test]
 fn and_absolute_x() {
+    use super::opcodes::{AND_ABSOLUTE_X, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
@@ -1195,6 +1302,8 @@ fn and_absolute_x() {
 
 #[test]
 fn asl_absolute_x() {
+    use super::opcodes::ASL_ABSOLUTE_X;
+
     assert!(matches!(
         get_instruction(&[ASL_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
@@ -1240,6 +1349,8 @@ fn asl_absolute_x() {
 
 #[test]
 fn lda_absolute_x() {
+    use super::opcodes::LDA_ABSOLUTE_X;
+
     assert!(matches!(
         get_instruction(&[LDA_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
@@ -1276,6 +1387,8 @@ fn lda_absolute_x() {
 
 #[test]
 fn ldy_absolute_x() {
+    use super::opcodes::LDY_ABSOLUTE_X;
+
     assert!(matches!(
         get_instruction(&[LDY_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
@@ -1312,6 +1425,8 @@ fn ldy_absolute_x() {
 
 #[test]
 fn adc_absolute_y() {
+    use super::opcodes::{ADC_ABSOLUTE_Y, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ADC_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
@@ -1370,6 +1485,8 @@ fn adc_absolute_y() {
 
 #[test]
 fn and_absolute_y() {
+    use super::opcodes::{AND_ABSOLUTE_Y, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
@@ -1426,6 +1543,8 @@ fn and_absolute_y() {
 
 #[test]
 fn lda_absolute_y() {
+    use super::opcodes::LDA_ABSOLUTE_Y;
+
     assert!(matches!(
         get_instruction(&[LDA_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
@@ -1462,6 +1581,8 @@ fn lda_absolute_y() {
 
 #[test]
 fn ldx_absolute_y() {
+    use super::opcodes::LDX_ABSOLUTE_Y;
+
     assert!(matches!(
         get_instruction(&[LDX_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
@@ -1498,6 +1619,8 @@ fn ldx_absolute_y() {
 
 #[test]
 fn adc_indirect_x() {
+    use super::opcodes::{ADC_INDIRECT_X, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ADC_INDIRECT_X, 0xab]).unwrap(),
         (
@@ -1559,6 +1682,8 @@ fn adc_indirect_x() {
 
 #[test]
 fn and_indirect_x() {
+    use super::opcodes::{AND_INDIRECT_X, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_INDIRECT_X, 0xab]).unwrap(),
         (
@@ -1614,6 +1739,8 @@ fn and_indirect_x() {
 
 #[test]
 fn lda_indirect_x() {
+    use super::opcodes::LDA_INDIRECT_X;
+
     assert!(matches!(
         get_instruction(&[LDA_INDIRECT_X, 0xab]).unwrap(),
         (
@@ -1651,6 +1778,8 @@ fn lda_indirect_x() {
 
 #[test]
 fn adc_indirect_y() {
+    use super::opcodes::{ADC_INDIRECT_Y, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[ADC_INDIRECT_Y, 0xab]).unwrap(),
         (
@@ -1712,6 +1841,8 @@ fn adc_indirect_y() {
 
 #[test]
 fn and_indirect_y() {
+    use super::opcodes::{AND_INDIRECT_Y, LDA_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[AND_INDIRECT_Y, 0xab]).unwrap(),
         (
@@ -1767,6 +1898,8 @@ fn and_indirect_y() {
 
 #[test]
 fn lda_indirect_y() {
+    use super::opcodes::LDA_INDIRECT_Y;
+
     assert!(matches!(
         get_instruction(&[LDA_INDIRECT_Y, 0xab]).unwrap(),
         (
@@ -1804,6 +1937,8 @@ fn lda_indirect_y() {
 
 #[test]
 fn tax() {
+    use super::opcodes::{LDA_IMMEDIATE, LDX_IMMEDIATE, TAX};
+
     assert!(matches!(
         get_instruction(&[TAX, 0x00]).unwrap(),
         (
@@ -1832,6 +1967,8 @@ fn tax() {
 
 #[test]
 fn inx() {
+    use super::opcodes::{INX, LDX_IMMEDIATE};
+
     assert!(matches!(
         get_instruction(&[INX, 0x00]).unwrap(),
         (

@@ -1,4 +1,4 @@
-// Add with carry
+// Add With Carry
 pub const ADC_IMMEDIATE: u8 = 0x69;
 pub const ADC_ZERO_PAGE: u8 = 0x65;
 pub const ADC_ZERO_PAGE_X: u8 = 0x75;
@@ -27,9 +27,10 @@ pub const ASL_ABSOLUTE_X: u8 = 0x1e;
 
 // Branch if Carry Clear
 pub const BCC: u8 = 0x90;
-
 // Branch if Carry Set
 pub const BCS: u8 = 0xb0;
+// Branch if Equal (Zero Set)
+pub const BEQ: u8 = 0xf0;
 
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
