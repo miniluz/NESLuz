@@ -310,6 +310,11 @@ impl Instruction {
                 branch_if: false,
             },
             BRK => Instruction::Break,
+            BVC => Instruction::Branch {
+                addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Overflow,
+                branch_if: false,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

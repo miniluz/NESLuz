@@ -1127,6 +1127,58 @@ fn bpl() {
 }
 
 #[test]
+fn bvc() {
+    use super::opcodes::BVC;
+
+    assert!(matches!(
+        get_instruction(&[BVC, 0x0b]).unwrap(),
+        (
+            Instruction::Branch {
+                addressing_mode: AM::Relative { offset: 0x0b },
+                flag: Flag::Overflow,
+                branch_if: false,
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BVC, 0x00, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Overflow, false);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BVC, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Overflow, false);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x800b);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BVC, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Overflow, true);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BVC, 0xf8, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Overflow, false);
+    cpu.run().unwrap();
+    assert_eq!(
+        cpu.program_counter,
+        0x8003u16.wrapping_add(0xf8u8 as i8 as u16)
+    );
+}
+
+#[test]
 fn adc_absolute() {
     use super::opcodes::{ADC_ABSOLUTE, LDA_IMMEDIATE};
 
