@@ -40,6 +40,8 @@ pub const BIT_ABSOLUTE: u8 = 0x2c;
 pub const BMI: u8 = 0x30;
 // Branch if Not Equal (Zero Clear)
 pub const BNE: u8 = 0xd0;
+// Branch if Positive (Negative Clear)
+pub const BPL: u8 = 0x10;
 
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
