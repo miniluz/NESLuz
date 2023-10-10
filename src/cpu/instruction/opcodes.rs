@@ -36,6 +36,9 @@ pub const BEQ: u8 = 0xf0;
 pub const BIT_ZERO_PAGE: u8 = 0x24;
 pub const BIT_ABSOLUTE: u8 = 0x2c;
 
+// Branch if Minus (Negative Set)
+pub const BMI: u8 = 0x30;
+
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;

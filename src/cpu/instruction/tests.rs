@@ -971,6 +971,58 @@ fn beq() {
 }
 
 #[test]
+fn bmi() {
+    use super::opcodes::BMI;
+
+    assert!(matches!(
+        get_instruction(&[BMI, 0x0b]).unwrap(),
+        (
+            Instruction::Branch {
+                addressing_mode: AM::Relative { offset: 0x0b },
+                flag: Flag::Negative,
+                branch_if: true,
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BMI, 0x00, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Negative, true);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BMI, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Negative, true);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x800b);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BMI, 0x08, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Negative, false);
+    cpu.run().unwrap();
+    assert_eq!(cpu.program_counter, 0x8003);
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run(&[BMI, 0xf8, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Negative, true);
+    cpu.run().unwrap();
+    assert_eq!(
+        cpu.program_counter,
+        0x8003u16.wrapping_add(0xf8u8 as i8 as u16)
+    );
+}
+
+#[test]
 fn adc_absolute() {
     use super::opcodes::{ADC_ABSOLUTE, LDA_IMMEDIATE};
 

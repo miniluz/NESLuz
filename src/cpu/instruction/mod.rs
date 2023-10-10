@@ -295,6 +295,11 @@ impl Instruction {
                 };
                 Instruction::Bit { addressing_mode }
             }
+            BMI => Instruction::Branch {
+                addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Negative,
+                branch_if: true,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),
