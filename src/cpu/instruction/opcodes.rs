@@ -28,6 +28,9 @@ pub const ASL_ABSOLUTE_X: u8 = 0x1e;
 // Branch if Carry Clear
 pub const BCC: u8 = 0x90;
 
+// Branch if Carry Set
+pub const BCS: u8 = 0xb0;
+
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;

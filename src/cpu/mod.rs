@@ -173,9 +173,15 @@ impl Cpu {
                         }
                     };
                 }
-                Bcc { addressing_mode } => {
-                    let new_address = addressing_mode.into_address(self);
-                    self.program_counter = new_address;
+                Branch {
+                    addressing_mode,
+                    flag,
+                    branch_if,
+                } => {
+                    if self.status.get(flag) == branch_if {
+                        let new_address = addressing_mode.into_address(self);
+                        self.program_counter = new_address;
+                    }
                 }
                 Ld {
                     destination,

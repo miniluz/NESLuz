@@ -1,5 +1,6 @@
 use super::{
     memory::{CpuMemoryError, Memory},
+    status::Flag,
     Register,
 };
 
@@ -55,8 +56,10 @@ pub enum Instruction {
     Asl {
         addressing_mode: AslAddressingMode,
     },
-    Bcc {
+    Branch {
         addressing_mode: AM::Relative,
+        flag: Flag,
+        branch_if: bool,
     },
     #[modes(
         mode = "immediate",
@@ -261,8 +264,10 @@ impl Instruction {
                 };
                 Instruction::Asl { addressing_mode }
             }
-            BCC => Instruction::Bcc {
+            BCC => Instruction::Branch {
                 addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Carry,
+                branch_if: false,
             },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
