@@ -43,6 +43,11 @@ pub const BNE: u8 = 0xd0;
 // Branch if Positive (Negative Clear)
 pub const BPL: u8 = 0x10;
 
+// Break
+pub const BRK: u8 = 0x00;
+
+// Branch if Overflow Set
+
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
