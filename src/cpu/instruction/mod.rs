@@ -300,6 +300,11 @@ impl Instruction {
                 flag: Flag::Negative,
                 branch_if: true,
             },
+            BNE => Instruction::Branch {
+                addressing_mode: AM::Relative::new(memory, &mut program_counter),
+                flag: Flag::Zero,
+                branch_if: false,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),
