@@ -106,7 +106,6 @@ impl Instruction {
         let instruction = memory.read(program_counter);
         program_counter += 1;
         let instruction = match instruction {
-            BRK => Instruction::Break,
             ADC_IMMEDIATE => {
                 let addressing_mode = AdcAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),
@@ -310,6 +309,7 @@ impl Instruction {
                 flag: Flag::Negative,
                 branch_if: false,
             },
+            BRK => Instruction::Break,
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

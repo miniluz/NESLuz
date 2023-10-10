@@ -121,7 +121,6 @@ impl Cpu {
             use Instruction::*;
 
             match instruction {
-                Break => break,
                 Adc { addressing_mode } => {
                     let value = addressing_mode.into_value(self);
                     let carry = self.status.get(Flag::Carry) as u8;
@@ -189,6 +188,7 @@ impl Cpu {
                     self.status.set(Flag::Overflow, value & 0b0100_0000 != 0);
                     self.status.set(Flag::Zero, self.register_a & value == 0);
                 }
+                Break => break,
                 Ld {
                     destination,
                     addressing_mode,
