@@ -183,6 +183,12 @@ impl Cpu {
                         self.program_counter = new_address;
                     }
                 }
+                Bit { addressing_mode } => {
+                    let value = addressing_mode.into_value(self);
+                    self.status.set(Flag::Negative, value & 0b1000_0000 != 0);
+                    self.status.set(Flag::Overflow, value & 0b0100_0000 != 0);
+                    self.status.set(Flag::Zero, self.register_a & value == 0);
+                }
                 Ld {
                     destination,
                     addressing_mode,

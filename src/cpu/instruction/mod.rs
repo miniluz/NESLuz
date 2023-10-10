@@ -60,6 +60,10 @@ pub enum Instruction {
         flag: Flag,
         branch_if: bool,
     },
+    #[modes(mode = "zero_page", mode = "absolute")]
+    Bit {
+        addressing_mode: BitAddressingMode,
+    },
     #[modes(
         mode = "immediate",
         mode = "zero_page",
@@ -279,6 +283,18 @@ impl Instruction {
                 flag: Flag::Zero,
                 branch_if: false,
             },
+            BIT_ZERO_PAGE => {
+                let addressing_mode = BitAddressingMode::ZeroPage {
+                    mode: AM::ZeroPage::new(memory, &mut program_counter),
+                };
+                Instruction::Bit { addressing_mode }
+            }
+            BIT_ABSOLUTE => {
+                let addressing_mode = BitAddressingMode::Absolute {
+                    mode: AM::Absolute::new(memory, &mut program_counter),
+                };
+                Instruction::Bit { addressing_mode }
+            }
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

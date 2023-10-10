@@ -372,6 +372,62 @@ fn asl_zero_page() {
 }
 
 #[test]
+fn bit_zero_page() {
+    use super::opcodes::BIT_ZERO_PAGE;
+
+    assert!(matches!(
+        get_instruction(&[BIT_ZERO_PAGE, 0xab]).unwrap(),
+        (
+            Instruction::Bit {
+                addressing_mode: BitAddressingMode::ZeroPage {
+                    mode: AM::ZeroPage { address: 0xab }
+                }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ZERO_PAGE, 0x02, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b11000000, 0x04])
+        .unwrap();
+    cpu.register_a = 0b0011_1111;
+    cpu.run().unwrap();
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.register_a = 0b0001_0101;
+    cpu.run().unwrap();
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(!cpu.status.get(Flag::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b1010_1010])
+        .unwrap();
+    cpu.register_a = 0b0101_0101;
+    cpu.run().unwrap();
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Negative));
+}
+
+#[test]
 fn lda_zero_page() {
     use super::opcodes::LDA_ZERO_PAGE;
 
@@ -1069,6 +1125,62 @@ fn asl_absolute() {
     assert!(!cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Negative));
     assert!(!cpu.status.get(Flag::Carry));
+}
+
+#[test]
+fn bit_absolute() {
+    use super::opcodes::BIT_ABSOLUTE;
+
+    assert!(matches!(
+        get_instruction(&[BIT_ABSOLUTE, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Bit {
+                addressing_mode: BitAddressingMode::Absolute {
+                    mode: AM::Absolute { address: 0xcdab }
+                }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ABSOLUTE, 0x02, 0x10, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x1000, &[0x01, 0x02, 0b11000000, 0x04])
+        .unwrap();
+    cpu.register_a = 0b0011_1111;
+    cpu.run().unwrap();
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ABSOLUTE, 0x03, 0x10, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x1000, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.register_a = 0b0001_0101;
+    cpu.run().unwrap();
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(!cpu.status.get(Flag::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ABSOLUTE, 0x03, 0x10, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x1000, &[0x01, 0x02, 0x03, 0b1010_1010])
+        .unwrap();
+    cpu.register_a = 0b0101_0101;
+    cpu.run().unwrap();
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Negative));
 }
 
 #[test]

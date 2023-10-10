@@ -32,6 +32,10 @@ pub const BCS: u8 = 0xb0;
 // Branch if Equal (Zero Set)
 pub const BEQ: u8 = 0xf0;
 
+// Bit test
+pub const BIT_ZERO_PAGE: u8 = 0x24;
+pub const BIT_ABSOLUTE: u8 = 0x2c;
+
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
