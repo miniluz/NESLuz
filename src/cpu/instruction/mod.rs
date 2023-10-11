@@ -324,6 +324,9 @@ impl Instruction {
                 branch_if: true,
             },
             CLC => Instruction::Clear { flag: Flag::Carry },
+            CLD => Instruction::Clear {
+                flag: Flag::Decimal,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),
