@@ -64,6 +64,9 @@ pub enum Instruction {
     Bit {
         addressing_mode: BitAddressingMode,
     },
+    Clear {
+        flag: Flag,
+    },
     #[modes(
         mode = "immediate",
         mode = "zero_page",
@@ -320,6 +323,7 @@ impl Instruction {
                 flag: Flag::Overflow,
                 branch_if: true,
             },
+            CLC => Instruction::Clear { flag: Flag::Carry },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

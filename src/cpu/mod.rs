@@ -189,6 +189,7 @@ impl Cpu {
                     self.status.set(Flag::Zero, self.register_a & value == 0);
                 }
                 Break => break,
+                Clear { flag } => self.status.set(flag, false),
                 Ld {
                     destination,
                     addressing_mode,

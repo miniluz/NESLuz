@@ -11,6 +11,43 @@ fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)
 }
 
 #[test]
+fn clc() {
+    use super::opcodes::CLC;
+
+    assert!(matches!(
+        get_instruction(&[CLC]).unwrap(),
+        (Instruction::Clear { flag: Flag::Carry }, 0x8001)
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load_and_run_test(&[CLC, 0x00]).unwrap();
+    assert!(!cpu.status.get(Flag::Carry));
+    assert!(!cpu.status.get(Flag::Decimal));
+    assert!(!cpu.status.get(Flag::InterruptDisable));
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Overflow));
+    assert!(!cpu.status.get(Flag::Zero));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CLC, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.status.set(Flag::Carry, true);
+    cpu.status.set(Flag::Decimal, true);
+    cpu.status.set(Flag::InterruptDisable, true);
+    cpu.status.set(Flag::Negative, true);
+    cpu.status.set(Flag::Overflow, true);
+    cpu.status.set(Flag::Zero, true);
+    cpu.run().unwrap();
+    assert!(!cpu.status.get(Flag::Carry));
+    assert!(cpu.status.get(Flag::Decimal));
+    assert!(cpu.status.get(Flag::InterruptDisable));
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Zero));
+}
+
+#[test]
 fn asl_accumulator() {
     use super::opcodes::{ASL_ACCUMULATOR, LDA_IMMEDIATE};
 

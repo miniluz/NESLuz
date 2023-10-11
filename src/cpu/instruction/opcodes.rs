@@ -51,6 +51,9 @@ pub const BVC: u8 = 0x50;
 // Branch if Overflow Set
 pub const BVS: u8 = 0x70;
 
+// Clear Carry Flag
+pub const CLC: u8 = 0x18;
+
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 pub const LDA_ZERO_PAGE: u8 = 0xa5;
