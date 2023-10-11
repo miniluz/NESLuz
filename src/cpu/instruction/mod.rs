@@ -327,6 +327,9 @@ impl Instruction {
             CLD => Instruction::Clear {
                 flag: Flag::Decimal,
             },
+            CLI => Instruction::Clear {
+                flag: Flag::InterruptDisable,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

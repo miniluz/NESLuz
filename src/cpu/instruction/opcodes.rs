@@ -55,6 +55,8 @@ pub const BVS: u8 = 0x70;
 pub const CLC: u8 = 0x18;
 // Clear Decimal Mode
 pub const CLD: u8 = 0xd8;
+// Clear Interrupt Disable
+pub const CLI: u8 = 0x58;
 
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
