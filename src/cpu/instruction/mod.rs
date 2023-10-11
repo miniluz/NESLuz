@@ -330,6 +330,9 @@ impl Instruction {
             CLI => Instruction::Clear {
                 flag: Flag::InterruptDisable,
             },
+            CLV => Instruction::Clear {
+                flag: Flag::Overflow,
+            },
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),

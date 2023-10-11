@@ -57,6 +57,8 @@ pub const CLC: u8 = 0x18;
 pub const CLD: u8 = 0xd8;
 // Clear Interrupt Disable
 pub const CLI: u8 = 0x58;
+// Clear Overflow Flag
+pub const CLV: u8 = 0xB8;
 
 // Load accumulator
 pub const LDA_IMMEDIATE: u8 = 0xa9;
