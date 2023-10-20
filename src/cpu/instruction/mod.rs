@@ -79,7 +79,6 @@ pub enum Instruction {
         mode = "indirect_y"
     )]
     Cmp {
-        register: Register,
         addressing_mode: CmpAddressingMode,
     },
     #[modes(
@@ -352,10 +351,7 @@ impl Instruction {
                 let addressing_mode = CmpAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_ZERO_PAGE => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -363,10 +359,7 @@ impl Instruction {
                         mode: AM::ZeroPage::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_ZERO_PAGE_X => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -374,10 +367,7 @@ impl Instruction {
                         mode: AM::ZeroPageX::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_ABSOLUTE => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -385,10 +375,7 @@ impl Instruction {
                         mode: AM::Absolute::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_ABSOLUTE_X => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -396,10 +383,7 @@ impl Instruction {
                         mode: AM::AbsoluteX::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_ABSOLUTE_Y => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -407,10 +391,7 @@ impl Instruction {
                         mode: AM::AbsoluteY::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_INDIRECT_X => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -418,10 +399,7 @@ impl Instruction {
                         mode: AM::IndirectX::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             CMP_INDIRECT_Y => {
                 let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
@@ -429,10 +407,7 @@ impl Instruction {
                         mode: AM::IndirectY::new(memory, &mut program_counter),
                     },
                 };
-                Instruction::Cmp {
-                    register: Register::A,
-                    addressing_mode,
-                }
+                Instruction::Cmp { addressing_mode }
             }
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {

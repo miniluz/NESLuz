@@ -294,7 +294,6 @@ fn cmp_immediate() {
         get_instruction(&[CMP_IMMEDIATE, 0xc0]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::Immediate {
                     mode: AM::Immediate { immediate: 0xc0 }
                 }
@@ -593,7 +592,6 @@ fn cmp_zero_page() {
         get_instruction(&[CMP_ZERO_PAGE, 0xc0]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::ZeroPage {
                         mode: AM::ZeroPage { address: 0xc0 }
@@ -978,7 +976,6 @@ fn cmp_zero_page_x() {
         get_instruction(&[CMP_ZERO_PAGE_X, 0xc0]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::ZeroPageX {
                         mode: AM::ZeroPageX { address: 0xc0 }
@@ -1780,7 +1777,6 @@ fn cmp_absolute() {
         get_instruction(&[CMP_ABSOLUTE, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::Absolute {
                         mode: AM::Absolute { address: 0xcdab }
@@ -2112,7 +2108,6 @@ fn cmp_absolute_x() {
         get_instruction(&[CMP_ABSOLUTE_X, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::AbsoluteX {
                         mode: AM::AbsoluteX { address: 0xcdab }
@@ -2365,7 +2360,6 @@ fn cmp_absolute_y() {
         get_instruction(&[CMP_ABSOLUTE_Y, 0xab, 0xcd]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::AbsoluteY {
                         mode: AM::AbsoluteY { address: 0xcdab }
@@ -2620,7 +2614,6 @@ fn cmp_indirect_x() {
         get_instruction(&[CMP_INDIRECT_X, 0xc1]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::IndirectX {
                         mode: AM::IndirectX { address: 0xc1 }
@@ -2841,7 +2834,6 @@ fn cmp_indirect_y() {
         get_instruction(&[CMP_INDIRECT_Y, 0xc1]).unwrap(),
         (
             Instruction::Cmp {
-                register: Register::A,
                 addressing_mode: CmpAddressingMode::CmpAddressAddressingMode {
                     mode: CmpAddressAddressingMode::IndirectY {
                         mode: AM::IndirectY { address: 0xc1 }

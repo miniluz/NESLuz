@@ -190,14 +190,10 @@ impl Cpu {
                 }
                 Break => break,
                 Clear { flag } => self.status.set(flag, false),
-                Cmp {
-                    register,
-                    addressing_mode,
-                } => {
+                Cmp { addressing_mode } => {
                     let value = addressing_mode.into_value(self);
                     dbg!(value);
-                    let register = self.get_register(&register);
-                    let result = register.wrapping_sub(value);
+                    let result = self.register_a.wrapping_sub(value);
                     self.set_zero_and_negative(result);
                     self.status.set(Flag::Carry, self.register_a >= value);
                 }
