@@ -197,6 +197,13 @@ impl Cpu {
                     self.set_zero_and_negative(result);
                     self.status.set(Flag::Carry, self.register_a >= value);
                 }
+                Cpx { addressing_mode } => {
+                    let value = addressing_mode.into_value(self);
+                    dbg!(value);
+                    let result = self.register_x.wrapping_sub(value);
+                    self.set_zero_and_negative(result);
+                    self.status.set(Flag::Carry, self.register_x >= value);
+                }
                 Ld {
                     destination,
                     addressing_mode,

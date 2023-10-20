@@ -337,6 +337,56 @@ fn cmp_immediate() {
 }
 
 #[test]
+fn cpx_immediate() {
+    use super::opcodes::CPX_IMMEDIATE;
+
+    assert!(matches!(
+        get_instruction(&[CPX_IMMEDIATE, 0xc0]).unwrap(),
+        (
+            Instruction::Cpx {
+                addressing_mode: CpxAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CPX_IMMEDIATE, 123]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 127);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPX_IMMEDIATE, 200]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 127);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPX_IMMEDIATE, 200]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_x = 200;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 200);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+}
+
+#[test]
 fn lda_immediate() {
     use super::opcodes::LDA_IMMEDIATE;
 
@@ -634,6 +684,61 @@ fn cmp_zero_page() {
     cpu.register_a = 200;
     cpu.run().unwrap();
     assert_eq!(cpu.register_a, 200);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+}
+
+#[test]
+fn cpx_zero_page() {
+    use super::opcodes::CPX_ZERO_PAGE;
+
+    assert!(matches!(
+        get_instruction(&[CPX_ZERO_PAGE, 0xc0]).unwrap(),
+        (
+            Instruction::Cpx {
+                addressing_mode: CpxAddressingMode::CpxAddressAddressingMode {
+                    mode: CpxAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CPX_ZERO_PAGE, 0x02]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 0x02, 123, 0x04]).unwrap();
+    cpu.register_x = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 127);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPX_ZERO_PAGE, 0x01]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 200, 0x03, 0x04]).unwrap();
+    cpu.register_x = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 127);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPX_ZERO_PAGE, 0x00]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[200, 0x02, 0x03, 0x04]).unwrap();
+    cpu.register_x = 200;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 200);
     assert!(!cpu.status.get(Flag::Negative));
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));
@@ -1819,6 +1924,61 @@ fn cmp_absolute() {
     cpu.register_a = 200;
     cpu.run().unwrap();
     assert_eq!(cpu.register_a, 200);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+}
+
+#[test]
+fn cpx_absolute() {
+    use super::opcodes::CPX_ABSOLUTE;
+
+    assert!(matches!(
+        get_instruction(&[CPX_ABSOLUTE, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Cpx {
+                addressing_mode: CpxAddressingMode::CpxAddressAddressingMode {
+                    mode: CpxAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab }
+                    }
+                }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CPX_ABSOLUTE, 0x02, 0x10]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[0x01, 0x02, 123, 0x04]).unwrap();
+    cpu.register_x = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 127);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPX_ABSOLUTE, 0x01, 0x10]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[0x01, 200, 0x03, 0x04]).unwrap();
+    cpu.register_x = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 127);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPX_ABSOLUTE, 0x00, 0x10]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[200, 0x02, 0x03, 0x04]).unwrap();
+    cpu.register_x = 200;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_x, 200);
     assert!(!cpu.status.get(Flag::Negative));
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));

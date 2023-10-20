@@ -96,6 +96,13 @@ pub const CMP_INDIRECT_X: u8 = 0xc1;
 /// Compare A (Indirect, Y)
 pub const CMP_INDIRECT_Y: u8 = 0xd1;
 
+/// Compare X (Immediate)
+pub const CPX_IMMEDIATE: u8 = 0xe0;
+/// Compare X (Zero page)
+pub const CPX_ZERO_PAGE: u8 = 0xe4;
+/// Compare X (Absolute)
+pub const CPX_ABSOLUTE: u8 = 0xec;
+
 /// Load to Accumulator (Immediate)
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 /// Load to Accumulator (Zero page)

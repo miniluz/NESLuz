@@ -81,6 +81,10 @@ pub enum Instruction {
     Cmp {
         addressing_mode: CmpAddressingMode,
     },
+    #[modes(mode = "immediate", mode = "zero_page", mode = "absolute")]
+    Cpx {
+        addressing_mode: CpxAddressingMode,
+    },
     #[modes(
         mode = "immediate",
         mode = "zero_page",
@@ -408,6 +412,28 @@ impl Instruction {
                     },
                 };
                 Instruction::Cmp { addressing_mode }
+            }
+            CPX_IMMEDIATE => {
+                let addressing_mode = CpxAddressingMode::Immediate {
+                    mode: AM::Immediate::new(memory, &mut program_counter),
+                };
+                Instruction::Cpx { addressing_mode }
+            }
+            CPX_ZERO_PAGE => {
+                let addressing_mode = CpxAddressingMode::CpxAddressAddressingMode {
+                    mode: CpxAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cpx { addressing_mode }
+            }
+            CPX_ABSOLUTE => {
+                let addressing_mode = CpxAddressingMode::CpxAddressAddressingMode {
+                    mode: CpxAddressAddressingMode::Absolute {
+                        mode: AM::Absolute::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cpx { addressing_mode }
             }
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
