@@ -387,6 +387,56 @@ fn cpx_immediate() {
 }
 
 #[test]
+fn cpy_immediate() {
+    use super::opcodes::CPY_IMMEDIATE;
+
+    assert!(matches!(
+        get_instruction(&[CPY_IMMEDIATE, 0xc0]).unwrap(),
+        (
+            Instruction::Cpy {
+                addressing_mode: CpyAddressingMode::Immediate {
+                    mode: AM::Immediate { immediate: 0xc0 }
+                }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CPY_IMMEDIATE, 123]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 127);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPY_IMMEDIATE, 200]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 127);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPY_IMMEDIATE, 200]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.register_y = 200;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 200);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+}
+
+#[test]
 fn lda_immediate() {
     use super::opcodes::LDA_IMMEDIATE;
 
@@ -739,6 +789,61 @@ fn cpx_zero_page() {
     cpu.register_x = 200;
     cpu.run().unwrap();
     assert_eq!(cpu.register_x, 200);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+}
+
+#[test]
+fn cpy_zero_page() {
+    use super::opcodes::CPY_ZERO_PAGE;
+
+    assert!(matches!(
+        get_instruction(&[CPY_ZERO_PAGE, 0xc0]).unwrap(),
+        (
+            Instruction::Cpy {
+                addressing_mode: CpyAddressingMode::CpyAddressAddressingMode {
+                    mode: CpyAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage { address: 0xc0 }
+                    }
+                }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CPY_ZERO_PAGE, 0x02]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 0x02, 123, 0x04]).unwrap();
+    cpu.register_y = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 127);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPY_ZERO_PAGE, 0x01]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[0x01, 200, 0x03, 0x04]).unwrap();
+    cpu.register_y = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 127);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPY_ZERO_PAGE, 0x00]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x00, &[200, 0x02, 0x03, 0x04]).unwrap();
+    cpu.register_y = 200;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 200);
     assert!(!cpu.status.get(Flag::Negative));
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));
@@ -1979,6 +2084,61 @@ fn cpx_absolute() {
     cpu.register_x = 200;
     cpu.run().unwrap();
     assert_eq!(cpu.register_x, 200);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+}
+
+#[test]
+fn cpy_absolute() {
+    use super::opcodes::CPY_ABSOLUTE;
+
+    assert!(matches!(
+        get_instruction(&[CPY_ABSOLUTE, 0xab, 0xcd]).unwrap(),
+        (
+            Instruction::Cpy {
+                addressing_mode: CpyAddressingMode::CpyAddressAddressingMode {
+                    mode: CpyAddressAddressingMode::Absolute {
+                        mode: AM::Absolute { address: 0xcdab }
+                    }
+                }
+            },
+            0x8003
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[CPY_ABSOLUTE, 0x02, 0x10]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[0x01, 0x02, 123, 0x04]).unwrap();
+    cpu.register_y = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 127);
+    assert!(!cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPY_ABSOLUTE, 0x01, 0x10]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[0x01, 200, 0x03, 0x04]).unwrap();
+    cpu.register_y = 127;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 127);
+    assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Carry));
+
+    let mut cpu = Cpu::new();
+    cpu.reset().unwrap();
+    cpu.load(&[CPY_ABSOLUTE, 0x00, 0x10]).unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory.load(0x1000, &[200, 0x02, 0x03, 0x04]).unwrap();
+    cpu.register_y = 200;
+    cpu.run().unwrap();
+    assert_eq!(cpu.register_y, 200);
     assert!(!cpu.status.get(Flag::Negative));
     assert!(cpu.status.get(Flag::Zero));
     assert!(cpu.status.get(Flag::Carry));

@@ -103,6 +103,13 @@ pub const CPX_ZERO_PAGE: u8 = 0xe4;
 /// Compare X (Absolute)
 pub const CPX_ABSOLUTE: u8 = 0xec;
 
+/// Compare Y (Immediate)
+pub const CPY_IMMEDIATE: u8 = 0xc0;
+/// Compare Y (Zero page)
+pub const CPY_ZERO_PAGE: u8 = 0xc4;
+/// Compare Y (Absolute)
+pub const CPY_ABSOLUTE: u8 = 0xcc;
+
 /// Load to Accumulator (Immediate)
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 /// Load to Accumulator (Zero page)
