@@ -79,6 +79,23 @@ pub const CLI: u8 = 0x58;
 /// Clear Overflow Flag
 pub const CLV: u8 = 0xB8;
 
+/// Compare A (Immediate)
+pub const CMP_IMMEDIATE: u8 = 0xc9;
+/// Compare A (Zero Page)
+pub const CMP_ZERO_PAGE: u8 = 0xc5;
+/// Compare A (Zero Page, X)
+pub const CMP_ZERO_PAGE_X: u8 = 0xd5;
+/// Compare A (Absolute)
+pub const CMP_ABSOLUTE: u8 = 0xcd;
+/// Compare A (Absolute, X)
+pub const CMP_ABSOLUTE_X: u8 = 0xdd;
+/// Compare A (Absolute, Y)
+pub const CMP_ABSOLUTE_Y: u8 = 0xd9;
+/// Compare A (Indirect, X)
+pub const CMP_INDIRECT_X: u8 = 0xc1;
+/// Compare A (Indirect, Y)
+pub const CMP_INDIRECT_Y: u8 = 0xd1;
+
 /// Load to Accumulator (Immediate)
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 /// Load to Accumulator (Zero page)

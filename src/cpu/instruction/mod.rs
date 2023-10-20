@@ -78,6 +78,21 @@ pub enum Instruction {
         mode = "indirect_x",
         mode = "indirect_y"
     )]
+    Cmp {
+        register: Register,
+        addressing_mode: CmpAddressingMode,
+    },
+    #[modes(
+        mode = "immediate",
+        mode = "zero_page",
+        mode = "zero_page_x",
+        mode = "zero_page_y",
+        mode = "absolute",
+        mode = "absolute_x",
+        mode = "absolute_y",
+        mode = "indirect_x",
+        mode = "indirect_y"
+    )]
     Ld {
         destination: Register,
         addressing_mode: LdAddressingMode,
@@ -333,6 +348,92 @@ impl Instruction {
             CLV => Instruction::Clear {
                 flag: Flag::Overflow,
             },
+            CMP_IMMEDIATE => {
+                let addressing_mode = CmpAddressingMode::Immediate {
+                    mode: AM::Immediate::new(memory, &mut program_counter),
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_ZERO_PAGE => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::ZeroPage {
+                        mode: AM::ZeroPage::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_ZERO_PAGE_X => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::ZeroPageX {
+                        mode: AM::ZeroPageX::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_ABSOLUTE => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::Absolute {
+                        mode: AM::Absolute::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_ABSOLUTE_X => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::AbsoluteX {
+                        mode: AM::AbsoluteX::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_ABSOLUTE_Y => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::AbsoluteY {
+                        mode: AM::AbsoluteY::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_INDIRECT_X => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::IndirectX {
+                        mode: AM::IndirectX::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
+            CMP_INDIRECT_Y => {
+                let addressing_mode = CmpAddressingMode::CmpAddressAddressingMode {
+                    mode: CmpAddressAddressingMode::IndirectY {
+                        mode: AM::IndirectY::new(memory, &mut program_counter),
+                    },
+                };
+                Instruction::Cmp {
+                    register: Register::A,
+                    addressing_mode,
+                }
+            }
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {
                     mode: AM::Immediate::new(memory, &mut program_counter),
