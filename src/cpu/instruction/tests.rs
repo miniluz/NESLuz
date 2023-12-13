@@ -11,6 +11,11 @@ fn get_instruction(instructions: &[u8]) -> color_eyre::Result<(Instruction, u16)
 }
 
 #[test]
+fn dec() {
+    todo!("DEC tests")
+}
+
+#[test]
 fn clc() {
     use super::opcodes::CLC;
 
@@ -685,6 +690,62 @@ fn asl_zero_page() {
 }
 
 #[test]
+fn bit_zero_page() {
+    use super::opcodes::BIT_ZERO_PAGE;
+
+    assert!(matches!(
+        get_instruction(&[BIT_ZERO_PAGE, 0xab]).unwrap(),
+        (
+            Instruction::Bit {
+                addressing_mode: BitAddressingMode::ZeroPage {
+                    mode: AM::ZeroPage { address: 0xab }
+                }
+            },
+            0x8002
+        )
+    ));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ZERO_PAGE, 0x02, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0b11000000, 0x04])
+        .unwrap();
+    cpu.register_a = 0b0011_1111;
+    cpu.run().unwrap();
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
+        .unwrap();
+    cpu.register_a = 0b0001_0101;
+    cpu.run().unwrap();
+    assert!(!cpu.status.get(Flag::Zero));
+    assert!(cpu.status.get(Flag::Overflow));
+    assert!(!cpu.status.get(Flag::Negative));
+
+    let mut cpu = Cpu::new();
+    cpu.load(&[BIT_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.reset().unwrap();
+    cpu.program_counter = 0x8000;
+    cpu.memory
+        .load(0x00, &[0x01, 0x02, 0x03, 0b1010_1010])
+        .unwrap();
+    cpu.register_a = 0b0101_0101;
+    cpu.run().unwrap();
+    assert!(cpu.status.get(Flag::Zero));
+    assert!(!cpu.status.get(Flag::Overflow));
+    assert!(cpu.status.get(Flag::Negative));
+}
+
+#[test]
 fn cmp_zero_page() {
     use super::opcodes::CMP_ZERO_PAGE;
 
@@ -850,15 +911,15 @@ fn cpy_zero_page() {
 }
 
 #[test]
-fn bit_zero_page() {
-    use super::opcodes::BIT_ZERO_PAGE;
+fn dec_zero_page() {
+    use super::opcodes::DEC_ZERO_PAGE;
 
     assert!(matches!(
-        get_instruction(&[BIT_ZERO_PAGE, 0xab]).unwrap(),
+        get_instruction(&[DEC_ZERO_PAGE, 0xc0]).unwrap(),
         (
-            Instruction::Bit {
-                addressing_mode: BitAddressingMode::ZeroPage {
-                    mode: AM::ZeroPage { address: 0xab }
+            Instruction::Dec {
+                addressing_mode: DecAddressingMode::ZeroPage {
+                    mode: AM::ZeroPage { address: 0xc0 }
                 }
             },
             0x8002
@@ -866,43 +927,24 @@ fn bit_zero_page() {
     ));
 
     let mut cpu = Cpu::new();
-    cpu.load(&[BIT_ZERO_PAGE, 0x02, 0x00]).unwrap();
+    cpu.load(&[DEC_ZERO_PAGE, 0x02]).unwrap();
     cpu.reset().unwrap();
     cpu.program_counter = 0x8000;
-    cpu.memory
-        .load(0x00, &[0x01, 0x02, 0b11000000, 0x04])
-        .unwrap();
-    cpu.register_a = 0b0011_1111;
+    cpu.memory.load(0x00, &[0x01, 0x02, 1, 0x04]).unwrap();
     cpu.run().unwrap();
-    assert!(cpu.status.get(Flag::Zero));
-    assert!(cpu.status.get(Flag::Overflow));
-    assert!(cpu.status.get(Flag::Negative));
-
-    let mut cpu = Cpu::new();
-    cpu.load(&[BIT_ZERO_PAGE, 0x03, 0x00]).unwrap();
-    cpu.reset().unwrap();
-    cpu.program_counter = 0x8000;
-    cpu.memory
-        .load(0x00, &[0x01, 0x02, 0x03, 0b0101_0101])
-        .unwrap();
-    cpu.register_a = 0b0001_0101;
-    cpu.run().unwrap();
-    assert!(!cpu.status.get(Flag::Zero));
-    assert!(cpu.status.get(Flag::Overflow));
+    assert_eq!(cpu.memory.read(0x02), 0);
     assert!(!cpu.status.get(Flag::Negative));
+    assert!(cpu.status.get(Flag::Zero));
 
     let mut cpu = Cpu::new();
-    cpu.load(&[BIT_ZERO_PAGE, 0x03, 0x00]).unwrap();
+    cpu.load(&[DEC_ZERO_PAGE, 0x03]).unwrap();
     cpu.reset().unwrap();
     cpu.program_counter = 0x8000;
-    cpu.memory
-        .load(0x00, &[0x01, 0x02, 0x03, 0b1010_1010])
-        .unwrap();
-    cpu.register_a = 0b0101_0101;
+    cpu.memory.load(0x00, &[0x01, 0x02, 0x03, 0]).unwrap();
     cpu.run().unwrap();
-    assert!(cpu.status.get(Flag::Zero));
-    assert!(!cpu.status.get(Flag::Overflow));
+    assert_eq!(cpu.memory.read(0x03), 0xff);
     assert!(cpu.status.get(Flag::Negative));
+    assert!(!cpu.status.get(Flag::Zero));
 }
 
 #[test]

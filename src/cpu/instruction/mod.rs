@@ -90,6 +90,15 @@ pub enum Instruction {
         addressing_mode: CpyAddressingMode,
     },
     #[modes(
+        mode = "zero_page",
+        mode = "zero_page_x",
+        mode = "absolute",
+        mode = "absolute_x"
+    )]
+    Dec {
+        addressing_mode: DecAddressingMode,
+    },
+    #[modes(
         mode = "immediate",
         mode = "zero_page",
         mode = "zero_page_x",
@@ -460,6 +469,30 @@ impl Instruction {
                     },
                 };
                 Instruction::Cpy { addressing_mode }
+            }
+            DEC_ZERO_PAGE => {
+                let addressing_mode = DecAddressingMode::ZeroPage {
+                    mode: AM::ZeroPage::new(memory, &mut program_counter),
+                };
+                Instruction::Dec { addressing_mode }
+            }
+            DEC_ZERO_PAGE_X => {
+                let addressing_mode = DecAddressingMode::ZeroPageX {
+                    mode: AM::ZeroPageX::new(memory, &mut program_counter),
+                };
+                Instruction::Dec { addressing_mode }
+            }
+            DEC_ABSOLUTE => {
+                let addressing_mode = DecAddressingMode::Absolute {
+                    mode: AM::Absolute::new(memory, &mut program_counter),
+                };
+                Instruction::Dec { addressing_mode }
+            }
+            DEC_ABSOLUTE_X => {
+                let addressing_mode = DecAddressingMode::AbsoluteX {
+                    mode: AM::AbsoluteX::new(memory, &mut program_counter),
+                };
+                Instruction::Dec { addressing_mode }
             }
             LDA_IMMEDIATE => {
                 let addressing_mode = LdAddressingMode::Immediate {

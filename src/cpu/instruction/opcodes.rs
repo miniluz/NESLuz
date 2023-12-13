@@ -110,6 +110,15 @@ pub const CPY_ZERO_PAGE: u8 = 0xc4;
 /// Compare Y (Absolute)
 pub const CPY_ABSOLUTE: u8 = 0xcc;
 
+/// Decrement Memory (Zero Page)
+pub const DEC_ZERO_PAGE: u8 = 0xc6;
+/// Decrement Memory (Zero Page, X)
+pub const DEC_ZERO_PAGE_X: u8 = 0xd6;
+/// Decrement Memory (Absolute)
+pub const DEC_ABSOLUTE: u8 = 0xce;
+/// Decrement Memory (Absolute, X)
+pub const DEC_ABSOLUTE_X: u8 = 0xde;
+
 /// Load to Accumulator (Immediate)
 pub const LDA_IMMEDIATE: u8 = 0xa9;
 /// Load to Accumulator (Zero page)
